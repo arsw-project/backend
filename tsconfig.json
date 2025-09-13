@@ -22,7 +22,9 @@
 		"strictBindCallApply": false,
 		"noFallthroughCasesInSwitch": false,
 		"paths": {
-			"@/*": ["src/*"]
+			"@app/*": ["src/app/*"],
+			"@health/*": ["src/health/*"],
+			"@users/*": ["src/users/*"]
 		}
 	}
 }

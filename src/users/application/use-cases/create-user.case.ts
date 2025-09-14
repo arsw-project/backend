@@ -1,10 +1,15 @@
+import { error, ok, Result } from '@common/utility/results';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
+import { UserConflictError } from '@users/application/errors/user-conflict.error';
+import { User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 export class CreateUserUseCase {
 	constructor(private readonly userRepository: UserRepository) {}
 
-	async execute(createUserDto: CreateUserDto) {
+	async execute(
+		createUserDto: CreateUserDto,
+	): Promise<Result<User, UserConflictError>> {
 		const emailResult = this.userRepository.findByEmail(createUserDto.email);
 
 		const providerIdResult = this.userRepository.findByProviderId(
@@ -17,16 +22,18 @@ export class CreateUserUseCase {
 			providerIdResult,
 		]);
 
-		if (emailExists) {
-			throw new Error('Email already in use');
-		}
+		if (emailExists || providerIdExists) {
+			const conflictError = new UserConflictError();
 
-		if (providerIdExists) {
-			throw new Error('Provider ID already in use');
+			if (emailExists) conflictError.addEmailConflictIssue();
+
+			if (providerIdExists) conflictError.addProviderIdConflictIssue();
+
+			return error(conflictError);
 		}
 
 		const user = await this.userRepository.create(createUserDto);
 
-		return user;
+		return ok(user);
 	}
 }

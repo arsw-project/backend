@@ -1,11 +1,9 @@
-import {
-	DrizzleConnection,
-	usersTable,
-} from '@drizzle/infrastructure/drizzle.connection';
+import { DrizzleConnection } from '@drizzle/infrastructure/drizzle.connection';
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
 import { User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
+import { usersTable } from '@users/infrastructure/entities/drizzle-user.schema';
 import { eq } from 'drizzle-orm';
 
 @Injectable()

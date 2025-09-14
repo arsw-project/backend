@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
 import { AuthProvider, User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
-import { usersTable } from '@users/infrastructure/entities/drizzle-user.schema';
+import { usersTable } from '@users/infrastructure/entities/user.drizzle-schema';
 import { and, eq, or } from 'drizzle-orm';
 
 @Injectable()

@@ -6,5 +6,14 @@ export abstract class UserRepository {
 
 	abstract findById(id: string): Promise<User | null>;
 
+	abstract findByEmail(email: string): Promise<User | null>;
+
+	abstract findByProviderId(
+		authProvider: string,
+		providerId: string,
+	): Promise<User | null>;
+
+	abstract checkUserConflict(userDto: CreateUserDto): Promise<boolean>;
+
 	abstract findAll(): Promise<User[]>;
 }

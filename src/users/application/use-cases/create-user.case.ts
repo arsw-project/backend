@@ -4,8 +4,29 @@ import { UserRepository } from '@users/domain/ports/persistence/user-repository.
 export class CreateUserUseCase {
 	constructor(private readonly userRepository: UserRepository) {}
 
-	async execute(data: CreateUserDto) {
-		const user = await this.userRepository.create(data);
+	async execute(createUserDto: CreateUserDto) {
+		const emailResult = this.userRepository.findByEmail(createUserDto.email);
+
+		const providerIdResult = this.userRepository.findByProviderId(
+			createUserDto.authProvider,
+			createUserDto.providerId || '', // TODO: handle optional providerId better
+		);
+
+		const [emailExists, providerIdExists] = await Promise.all([
+			emailResult,
+			providerIdResult,
+		]);
+
+		if (emailExists) {
+			throw new Error('Email already in use');
+		}
+
+		if (providerIdExists) {
+			throw new Error('Provider ID already in use');
+		}
+
+		const user = await this.userRepository.create(createUserDto);
+
 		return user;
 	}
 }

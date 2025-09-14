@@ -4,7 +4,6 @@ import { UserDrizzleAdapter } from '@users/infrastructure/adapters/persistence/u
 import { UserRestController } from '@users/infrastructure/http/user-rest.controller';
 
 @Module({
-	imports: [UsersModule],
 	providers: [
 		{
 			provide: UserRepository,

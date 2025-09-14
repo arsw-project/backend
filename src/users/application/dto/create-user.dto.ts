@@ -5,7 +5,10 @@ export const createUserSchema = z
 		name: z.string().min(1, 'Name is required'),
 		email: z.email('Invalid email address'),
 		password: z.string().min(1, 'Password is required'),
-		authProvider: z.string().min(1, 'Auth provider is required'),
+		authProvider: z.enum(
+			['local', 'google'],
+			'Auth provider must be either local or google',
+		),
 		providerId: z.string().nullable(),
 	})
 	.required();

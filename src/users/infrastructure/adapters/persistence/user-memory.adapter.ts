@@ -25,6 +25,33 @@ export class UserMemoryAdapter extends UserRepository {
 		return Promise.resolve(user || null);
 	}
 
+	findByEmail(email: string): Promise<User | null> {
+		const user = this.users.find((user) => user.email === email);
+		return Promise.resolve(user || null);
+	}
+
+	findByProviderId(
+		authProvider: string,
+		providerId: string,
+	): Promise<User | null> {
+		const user = this.users.find(
+			(user) =>
+				user.authProvider === authProvider && user.providerId === providerId,
+		);
+		return Promise.resolve(user || null);
+	}
+
+	checkUserConflict(userDto: CreateUserDto): Promise<boolean> {
+		const conflictUser = this.users.find(
+			(user) =>
+				user.email === userDto.email ||
+				(user.authProvider === userDto.authProvider &&
+					user.providerId === userDto.providerId),
+		);
+
+		return Promise.resolve(!!conflictUser);
+	}
+
 	findAll(): Promise<User[]> {
 		return Promise.resolve(this.users);
 	}

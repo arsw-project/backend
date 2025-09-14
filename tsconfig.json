@@ -24,7 +24,8 @@
 		"paths": {
 			"@app/*": ["src/app/*"],
 			"@health/*": ["src/health/*"],
-			"@users/*": ["src/users/*"]
+			"@users/*": ["src/users/*"],
+			"@common/*": ["src/common/*"]
 		}
 	}
 }

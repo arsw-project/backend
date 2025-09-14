@@ -3,7 +3,8 @@ export interface User {
 	name: string;
 	email: string;
 	password: string;
-	providerId?: string;
+	authProvider: string;
+	providerId: string | null;
 	createdAt: Date;
 	updatedAt: Date;
 }

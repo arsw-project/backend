@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
 import { User } from '@users/domain/entities/user.entity';
-import { UserRepository } from '@users/domain/ports/user-repository.port';
+import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 @Injectable()
 export class UserMemoryAdapter extends UserRepository {

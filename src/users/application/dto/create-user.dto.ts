@@ -5,7 +5,8 @@ export const createUserSchema = z
 		name: z.string().min(1, 'Name is required'),
 		email: z.email('Invalid email address'),
 		password: z.string().min(1, 'Password is required'),
-		providerId: z.string().optional(),
+		authProvider: z.string().min(1, 'Auth provider is required'),
+		providerId: z.string().nullable(),
 	})
 	.required();
 

@@ -25,7 +25,8 @@
 			"@app/*": ["src/app/*"],
 			"@health/*": ["src/health/*"],
 			"@users/*": ["src/users/*"],
-			"@common/*": ["src/common/*"]
+			"@common/*": ["src/common/*"],
+			"@drizzle/*": ["src/drizzle/*"]
 		}
 	}
 }

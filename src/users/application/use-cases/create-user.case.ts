@@ -1,5 +1,5 @@
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
-import { UserRepository } from '@users/domain/ports/user-repository.port';
+import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 export class CreateUserUseCase {
 	constructor(private readonly userRepository: UserRepository) {}

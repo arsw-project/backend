@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
-import { UserRepository } from '@users/domain/ports/user-repository.port';
-import { UserMemoryAdapter } from '@users/infrastructure/adapters/user-memory.adapter';
+import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
+import { UserDrizzleAdapter } from '@users/infrastructure/adapters/persistence/user-drizzle.adapter';
 import { UserRestController } from '@users/infrastructure/http/user-rest.controller';
 
 @Module({
+	imports: [UsersModule],
 	providers: [
 		{
-			useClass: UserMemoryAdapter,
 			provide: UserRepository,
+			useClass: UserDrizzleAdapter,
 		},
 	],
 	controllers: [UserRestController],

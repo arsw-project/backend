@@ -6,7 +6,7 @@ import {
 } from '@users/application/dto/create-user.dto';
 import { CreateUserUseCase } from '@users/application/use-cases/create-user.case';
 import { GetAllUsersUseCase } from '@users/application/use-cases/get-all-users.case';
-import { UserRepository } from '@users/domain/ports/user-repository.port';
+import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 @Controller('users')
 export class UserRestController {

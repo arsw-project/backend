@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { error, ok, Result } from '@common/utility/results';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
 import { UserConflictError } from '@users/application/errors/user-conflict.error';
@@ -10,11 +11,17 @@ export class CreateUserUseCase {
 	async execute(
 		createUserDto: CreateUserDto,
 	): Promise<Result<User, UserConflictError>> {
-		const emailResult = this.userRepository.findByEmail(createUserDto.email);
+		const dto = { ...createUserDto };
+
+		if (dto.authProvider === 'local') {
+			dto.providerId = randomUUID();
+		}
+
+		const emailResult = this.userRepository.findByEmail(dto.email);
 
 		const providerIdResult = this.userRepository.findByProviderId(
-			createUserDto.authProvider,
-			createUserDto.providerId || '', // TODO: handle optional providerId better
+			dto.authProvider,
+			dto.providerId || '', // TODO: handle optional providerId better
 		);
 
 		const [emailExists, providerIdExists] = await Promise.all([
@@ -32,7 +39,7 @@ export class CreateUserUseCase {
 			return error(conflictError);
 		}
 
-		const user = await this.userRepository.create(createUserDto);
+		const user = await this.userRepository.create(dto);
 
 		return ok(user);
 	}

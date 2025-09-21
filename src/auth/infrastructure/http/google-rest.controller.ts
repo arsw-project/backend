@@ -10,12 +10,7 @@ import {
 	Res,
 } from '@nestjs/common';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
-import {
-	decodeIdToken,
-	generateCodeVerifier,
-	generateState,
-	OAuth2Tokens,
-} from 'arctic';
+import { decodeIdToken, OAuth2Tokens } from 'arctic';
 import type { Request, Response } from 'express';
 
 interface GoogleIdTokenClaims {
@@ -38,13 +33,8 @@ export class GoogleRestController {
 	@Get('login')
 	@Redirect()
 	emailLogin(@Res({ passthrough: true }) response: Response) {
-		const state = generateState();
-		const codeVerifier = generateCodeVerifier();
-		const url = this.arcticService.googleClient.createAuthorizationURL(
-			state,
-			codeVerifier,
-			['openid', 'email', 'profile'],
-		);
+		const { codeVerifier, state, url } =
+			this.arcticService.createGoogleAuthURL();
 
 		response.cookie('google_oauth_state', state, {
 			path: '/',
@@ -71,6 +61,7 @@ export class GoogleRestController {
 	}
 
 	@Get('login/callback')
+	@Redirect()
 	async emailLoginCallback(@Req() request: Request) {
 		const url = new URL(`http://localhost${request.url}`);
 		const code = url.searchParams.get('code');

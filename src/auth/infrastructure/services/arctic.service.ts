@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Google } from 'arctic';
+import { Google, generateCodeVerifier, generateState } from 'arctic';
+
+interface GoogleAuthData {
+	state: string;
+	codeVerifier: string;
+	url: URL;
+}
 
 @Injectable()
 export class ArcticService {
@@ -17,5 +23,17 @@ export class ArcticService {
 			process.env.GOOGLE_CLIENT_SECRET,
 			'http://localhost:3000/auth/google/login/callback',
 		);
+	}
+
+	public createGoogleAuthURL(): GoogleAuthData {
+		const state = generateState();
+		const codeVerifier = generateCodeVerifier();
+		const url = this.googleClient.createAuthorizationURL(state, codeVerifier, [
+			'openid',
+			'email',
+			'profile',
+		]);
+
+		return { state, codeVerifier, url };
 	}
 }

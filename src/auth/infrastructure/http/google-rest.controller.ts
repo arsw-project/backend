@@ -1,4 +1,5 @@
-import { ArcticService } from '@auth/infrastructure/services/arctic.service';
+import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
+import { ArcticService } from '@auth/infrastructure/clients/arctic.client';
 import {
 	BadRequestException,
 	Controller,
@@ -9,7 +10,6 @@ import {
 	Req,
 	Res,
 } from '@nestjs/common';
-import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { decodeIdToken, OAuth2Tokens } from 'arctic';
 import type { Request, Response } from 'express';
 
@@ -27,7 +27,7 @@ export class GoogleRestController {
 
 	constructor(
 		private readonly arcticService: ArcticService,
-		private readonly userRepository: UserRepository,
+		private readonly loginGoogleUserUseCase: LoginGoogleUserUseCase,
 	) {}
 
 	@Get('login')
@@ -62,8 +62,11 @@ export class GoogleRestController {
 
 	@Get('login/callback')
 	@Redirect()
-	async emailLoginCallback(@Req() request: Request) {
-		const url = new URL(`http://localhost${request.url}`);
+	async emailLoginCallback(
+		@Req() request: Request,
+		@Res({ passthrough: true }) response: Response,
+	) {
+		const url = new URL(`${process.env.HOST || 'localhost'}${request.url}`);
 		const code = url.searchParams.get('code');
 		const state = url.searchParams.get('state');
 		const cookies = request.cookies;
@@ -91,31 +94,30 @@ export class GoogleRestController {
 		}
 
 		const claims = decodeIdToken(tokens.idToken()) as GoogleIdTokenClaims;
-		const googleUserId = claims.sub;
-		const email = claims.email;
-		const name = claims.name;
 
-		const existingUser = await this.userRepository.findByProviderId(
-			'google',
-			googleUserId,
-		);
-
-		if (existingUser) {
-			return { message: 'User logged in successfully', user: existingUser };
-		}
-
-		const newUser = await this.userRepository.create({
-			email: email,
-			authProvider: 'google',
-			password: '',
-			name: name,
-			providerId: googleUserId,
+		const session = await this.loginGoogleUserUseCase.execute({
+			email: claims.email,
+			name: claims.name,
+			googleUserId: claims.sub,
 		});
 
-		return {
-			message: 'User created and logged in successfully',
-			user: newUser,
+		response.clearCookie('google_oauth_state', { path: '/' });
+		response.clearCookie('google_code_verifier', { path: '/' });
+
+		response.cookie('session_token', session.value.token, {
+			path: '/',
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge: 60 * 60 * 24 * 1000, // 24 hours
+			sameSite: 'lax',
+		});
+
+		const redirect: HttpRedirectResponse = {
+			url: `${process.env.GOOGLE_LOGIN_REDIRECT}/`,
+			statusCode: 302,
 		};
+
+		return redirect;
 	}
 
 	@Get('logout')

@@ -15,16 +15,17 @@ import {
 } from '@users/application/dto/create-user.dto';
 import { CreateUserUseCase } from '@users/application/use-cases/create-user.case';
 import { GetAllUsersUseCase } from '@users/application/use-cases/get-all-users.case';
-import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 @Controller('users')
 export class UserRestController {
-	constructor(private readonly userRepository: UserRepository) {}
+	constructor(
+		private readonly getAllUsersUseCase: GetAllUsersUseCase,
+		private readonly createUserUseCase: CreateUserUseCase,
+	) {}
 
 	@Get()
 	async getAllUsers() {
-		const useCase = new GetAllUsersUseCase(this.userRepository);
-		const result = await useCase.execute();
+		const result = await this.getAllUsersUseCase.execute();
 
 		if (!result.ok) {
 			throw new InternalServerErrorException(); // Handle error appropriately
@@ -36,8 +37,7 @@ export class UserRestController {
 	@Post()
 	@UsePipes(new ZodValidationPipe(createUserSchema))
 	async createUser(@Body() createUserDto: CreateUserDto) {
-		const useCase = new CreateUserUseCase(this.userRepository);
-		const result = await useCase.execute(createUserDto);
+		const result = await this.createUserUseCase.execute(createUserDto);
 
 		if (!result.ok) {
 			const error = result.error;

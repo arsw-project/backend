@@ -1,3 +1,4 @@
+import { AuthModule } from '@auth/module/auth.module';
 import { DrizzleModule } from '@drizzle/module/drizzle.module';
 import { HealthModule } from '@health/module/health.module';
 import { Module } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { UsersModule } from '@users/module/users.module';
 		DrizzleModule,
 		HealthModule,
 		UsersModule,
+		AuthModule,
 	],
 	controllers: [],
 	providers: [],

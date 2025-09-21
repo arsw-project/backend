@@ -25,6 +25,7 @@
 			"@app/*": ["src/app/*"],
 			"@health/*": ["src/health/*"],
 			"@users/*": ["src/users/*"],
+			"@auth/*": ["src/auth/*"],
 			"@common/*": ["src/common/*"],
 			"@drizzle/*": ["src/drizzle/*"]
 		}

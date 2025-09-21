@@ -1,5 +1,5 @@
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
-import { User } from '@users/domain/entities/user.entity';
+import { AuthProvider, User } from '@users/domain/entities/user.entity';
 
 export abstract class UserRepository {
 	abstract create(createUserDto: CreateUserDto): Promise<User>;
@@ -9,7 +9,7 @@ export abstract class UserRepository {
 	abstract findByEmail(email: string): Promise<User | null>;
 
 	abstract findByProviderId(
-		authProvider: string,
+		authProvider: AuthProvider,
 		providerId: string,
 	): Promise<User | null>;
 

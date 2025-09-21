@@ -1,8 +1,8 @@
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
-	BadRequestException,
 	Body,
+	ConflictException,
 	Controller,
 	Get,
 	InternalServerErrorException,
@@ -48,7 +48,7 @@ export class UserRestController {
 
 			switch (error.code) {
 				case 'USER_CONFLICT':
-					throw new BadRequestException({
+					throw new ConflictException({
 						message: error.message,
 						code: error.code,
 						errors: error.issues,

@@ -4,6 +4,7 @@ import { HealthModule } from '@health/module/health.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '@users/module/users.module';
+import { OrganizationsModule } from '@organizations/module/organizations.module';
 
 @Module({
 	imports: [
@@ -13,6 +14,7 @@ import { UsersModule } from '@users/module/users.module';
 		DrizzleModule,
 		HealthModule,
 		UsersModule,
+		OrganizationsModule,
 		AuthModule,
 	],
 	controllers: [],

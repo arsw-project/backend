@@ -36,7 +36,10 @@ export class SessionRestController {
 
 	@Post('login')
 	@UsePipes(new ZodValidationPipe(loginUserSchema))
-	async login(@Body() body: LoginUserDto) {
+	async login(
+		@Body() body: LoginUserDto,
+		@Res({ passthrough: true }) response: Response,
+	) {
 		const result = await this.loginEmailUserUseCase.execute(body);
 
 		if (!result.ok) {
@@ -59,9 +62,16 @@ export class SessionRestController {
 			throw new InternalServerErrorException(); // Fallback for unhandled application errors
 		}
 
+		response.cookie('session-token', result.value.token, {
+			path: '/',
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+			maxAge: 60 * 60 * 24 * 1000, // 24 hours
+			sameSite: 'lax',
+		});
+
 		return { user: result.value.user };
 	}
-
 	@Post('logout')
 	@UseGuards(AuthGuard)
 	async logout(

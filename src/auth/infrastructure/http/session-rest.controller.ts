@@ -1,10 +1,13 @@
 import { User } from '@auth/infrastructure/annotations/user.annotation';
-import { Controller, Get } from '@nestjs/common';
+import { AuthGuard } from '@auth/infrastructure/guards/auth.guard';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import type { SessionUserDto } from '@users/application/dto/session-user.dto';
 
 @Controller('auth')
 export class SessionRestController {
 	@Get('me')
-	getProfile(@User() user: unknown) {
-		return { message: 'This is a protected route', user }; //TODO: Add guards
+	@UseGuards(AuthGuard)
+	getProfile(@User() user: SessionUserDto) {
+		return { user };
 	}
 }

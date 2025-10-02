@@ -1,6 +1,7 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
 import { CreateSessionUseCase } from '@auth/application/use-cases/create-session.case';
 import { GetSessionUseCase } from '@auth/application/use-cases/get-session.case';
+import { LoginEmailUserUseCase } from '@auth/application/use-cases/login-email-user.case';
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
 import { SessionMemoryAdapter } from '@auth/infrastructure/adapters/persistence/session-memory.adapter';
@@ -49,6 +50,21 @@ import { UsersModule } from '@users/module/users.module';
 				createSessionUseCase: CreateSessionUseCase,
 			) => {
 				return new LoginGoogleUserUseCase(
+					cryptoService,
+					userRepository,
+					createSessionUseCase,
+				);
+			},
+			inject: [CryptoService, UserRepository, CreateSessionUseCase],
+		},
+		{
+			provide: LoginEmailUserUseCase,
+			useFactory: (
+				cryptoService: CryptoService,
+				userRepository: UserRepository,
+				createSessionUseCase: CreateSessionUseCase,
+			) => {
+				return new LoginEmailUserUseCase(
 					cryptoService,
 					userRepository,
 					createSessionUseCase,

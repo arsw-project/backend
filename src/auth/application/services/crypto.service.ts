@@ -54,4 +54,15 @@ export class CryptoService {
 
 		return hash;
 	}
+
+	public async verifyPassword(
+		hashedPassword: string,
+		password: string,
+	): Promise<boolean> {
+		try {
+			return await argon2.verify(hashedPassword, password);
+		} catch {
+			return false;
+		}
+	}
 }

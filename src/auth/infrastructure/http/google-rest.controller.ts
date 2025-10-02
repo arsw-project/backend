@@ -104,7 +104,7 @@ export class GoogleRestController {
 		response.clearCookie('google_oauth_state', { path: '/' });
 		response.clearCookie('google_code_verifier', { path: '/' });
 
-		response.cookie('session_token', session.value.token, {
+		response.cookie('session-token', session.value.token, {
 			path: '/',
 			httpOnly: true,
 			secure: process.env.NODE_ENV === 'production',

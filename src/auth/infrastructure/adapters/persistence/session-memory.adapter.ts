@@ -12,7 +12,15 @@ export class SessionMemoryAdapter extends SessionRepository {
 		return this.sessions.get(id) || null;
 	}
 
-	async delete(id: string): Promise<void> {
+	async deleteById(id: string): Promise<void> {
 		this.sessions.delete(id);
+	}
+
+	async deleteByUserId(userId: string): Promise<void> {
+		for (const [id, session] of this.sessions) {
+			if (session.user.id === userId) {
+				this.sessions.delete(id);
+			}
+		}
 	}
 }

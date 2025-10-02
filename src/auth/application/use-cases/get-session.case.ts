@@ -19,14 +19,14 @@ export class GetSessionUseCase {
 	) {}
 
 	async execute(
-		token: string,
+		sessionToken: string,
 	): Promise<
 		Result<
 			Session,
 			MalformedTokenError | SessionNotFoundError | InvalidSecretError
 		>
 	> {
-		const tokenParts = token.split('.');
+		const tokenParts = sessionToken.split('.');
 		if (tokenParts.length !== 2) {
 			return error(new MalformedTokenError());
 		}
@@ -64,7 +64,7 @@ export class GetSessionUseCase {
 			now.getTime() - session.createdAt.getTime() >=
 			sessionExpiresInSeconds * 1000
 		) {
-			await this.sessionRepository.delete(sessionId);
+			await this.sessionRepository.deleteById(sessionId);
 			return null;
 		}
 

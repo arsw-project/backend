@@ -1,5 +1,6 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
 import { CreateSessionUseCase } from '@auth/application/use-cases/create-session.case';
+import { DeleteSessionUseCase } from '@auth/application/use-cases/delete-session.case';
 import { GetSessionUseCase } from '@auth/application/use-cases/get-session.case';
 import { LoginEmailUserUseCase } from '@auth/application/use-cases/login-email-user.case';
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
@@ -72,11 +73,18 @@ import { UsersModule } from '@users/module/users.module';
 			},
 			inject: [CryptoService, UserRepository, CreateSessionUseCase],
 		},
+		{
+			provide: DeleteSessionUseCase,
+			useFactory: (sessionRepository: SessionRepository) => {
+				return new DeleteSessionUseCase(sessionRepository);
+			},
+			inject: [SessionRepository],
+		},
 	],
 	controllers: [GoogleRestController, SessionRestController],
 })
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(SessionMiddleware).forRoutes('auth/me');
+		consumer.apply(SessionMiddleware).forRoutes('auth/me', 'auth/logout');
 	}
 }

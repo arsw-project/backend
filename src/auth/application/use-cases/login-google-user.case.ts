@@ -1,13 +1,8 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
-import {
-	Session,
-	SessionWithToken,
-} from '@auth/domain/entities/session.entity';
-import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
+import { CreateSessionUseCase } from '@auth/application/use-cases/create-session.case';
+import { SessionWithToken } from '@auth/domain/entities/session.entity';
 import { ok, SuccessResult } from '@common/utility/results';
 import { Injectable } from '@nestjs/common';
-import { sessionUserSchema } from '@users/application/dto/session-user.dto';
-import { User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 interface ExecuteParams {
@@ -20,8 +15,8 @@ interface ExecuteParams {
 export class LoginGoogleUserUseCase {
 	constructor(
 		private readonly cryptoService: CryptoService,
-		private readonly sessionRepository: SessionRepository,
 		private readonly userRepository: UserRepository,
+		private readonly createSessionUseCase: CreateSessionUseCase,
 	) {}
 
 	async execute({
@@ -44,38 +39,8 @@ export class LoginGoogleUserUseCase {
 			});
 		}
 
-		const session = await this.createSession(authenticatedUser);
+		const session = await this.createSessionUseCase.execute(authenticatedUser);
 
-		return ok(session);
-	}
-
-	private async createSession(user: User): Promise<SessionWithToken> {
-		const now = new Date();
-
-		const id = this.cryptoService.generateSecureRandomString(24);
-		const secret = this.cryptoService.generateSecureRandomString(48);
-		const secretHash = await this.cryptoService.hashSecret(secret);
-
-		const token = `${id}.${secret}`;
-
-		const sessionUser = sessionUserSchema.safeParse(user);
-
-		if (!sessionUser.success) {
-			throw new Error('Invalid user data for session');
-		}
-
-		const session: Session = {
-			id,
-			secretHash,
-			createdAt: now,
-			user: sessionUser.data,
-		};
-
-		await this.sessionRepository.create(session);
-
-		return {
-			...session,
-			token,
-		};
+		return ok(session.value);
 	}
 }

@@ -1,5 +1,7 @@
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class DeleteSessionUseCase {
 	constructor(private readonly sessionRepository: SessionRepository) {}
 

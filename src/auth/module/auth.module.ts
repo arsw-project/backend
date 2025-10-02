@@ -1,4 +1,5 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
+import { CreateSessionUseCase } from '@auth/application/use-cases/create-session.case';
 import { GetSessionUseCase } from '@auth/application/use-cases/get-session.case';
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
@@ -21,21 +22,6 @@ import { UsersModule } from '@users/module/users.module';
 			useClass: SessionMemoryAdapter,
 		},
 		{
-			provide: LoginGoogleUserUseCase,
-			useFactory: (
-				cryptoService: CryptoService,
-				sessionRepository: SessionRepository,
-				userRepository: UserRepository,
-			) => {
-				return new LoginGoogleUserUseCase(
-					cryptoService,
-					sessionRepository,
-					userRepository,
-				);
-			},
-			inject: [CryptoService, SessionRepository, UserRepository],
-		},
-		{
 			provide: GetSessionUseCase,
 			useFactory: (
 				cryptoService: CryptoService,
@@ -44,6 +30,31 @@ import { UsersModule } from '@users/module/users.module';
 				return new GetSessionUseCase(cryptoService, sessionRepository);
 			},
 			inject: [CryptoService, SessionRepository],
+		},
+		{
+			provide: CreateSessionUseCase,
+			useFactory: (
+				cryptoService: CryptoService,
+				sessionRepository: SessionRepository,
+			) => {
+				return new CreateSessionUseCase(cryptoService, sessionRepository);
+			},
+			inject: [CryptoService, SessionRepository],
+		},
+		{
+			provide: LoginGoogleUserUseCase,
+			useFactory: (
+				cryptoService: CryptoService,
+				userRepository: UserRepository,
+				createSessionUseCase: CreateSessionUseCase,
+			) => {
+				return new LoginGoogleUserUseCase(
+					cryptoService,
+					userRepository,
+					createSessionUseCase,
+				);
+			},
+			inject: [CryptoService, SessionRepository, CreateSessionUseCase],
 		},
 	],
 	controllers: [GoogleRestController, SessionRestController],

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import argon2 from 'argon2';
 
 @Injectable()
 export class CryptoService {
@@ -46,5 +47,11 @@ export class CryptoService {
 		}
 
 		return c === 0;
+	}
+
+	public async hashPassword(password: string): Promise<string> {
+		const hash = await argon2.hash(password);
+
+		return hash;
 	}
 }

@@ -29,11 +29,15 @@ export class LoginGoogleUserUseCase {
 			googleUserId,
 		);
 
+		const randomHashedPassword = await this.cryptoService.hashPassword(
+			this.cryptoService.generateSecureRandomString(12),
+		);
+
 		if (!authenticatedUser) {
 			authenticatedUser = await this.userRepository.create({
 				name: name,
 				email: email,
-				password: this.cryptoService.generateSecureRandomString(48), // Random password since Google handles authentication
+				password: randomHashedPassword,
 				authProvider: 'google',
 				providerId: googleUserId,
 			});

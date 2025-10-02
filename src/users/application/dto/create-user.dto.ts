@@ -2,11 +2,7 @@ import { z } from 'zod';
 
 export const createUserSchema = z
 	.object({
-		name: z
-			.string()
-			.min(1, 'Name is required')
-			.regex(/^\S.*$/, 'Name cannot start with whitespace')
-			.max(5, 'Name cannot be longer than 5 characters'),
+		name: z.string().min(1, 'Name is required'),
 		email: z.email('Invalid email address'),
 		password: z.string().min(1, 'Password is required'),
 		authProvider: z.enum(

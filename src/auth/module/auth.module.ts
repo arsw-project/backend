@@ -54,7 +54,7 @@ import { UsersModule } from '@users/module/users.module';
 					createSessionUseCase,
 				);
 			},
-			inject: [CryptoService, SessionRepository, CreateSessionUseCase],
+			inject: [CryptoService, UserRepository, CreateSessionUseCase],
 		},
 	],
 	controllers: [GoogleRestController, SessionRestController],

@@ -9,7 +9,7 @@ import { SessionRepository } from '@auth/domain/ports/persistence/session-reposi
 import { error, ok, Result } from '@common/utility/results';
 import { Injectable } from '@nestjs/common';
 
-const sessionExpiresInSeconds = 60 * 60 * 24;
+const sessionExpiresInSeconds = 60 * 60 * 24; // 24 hours
 
 @Injectable()
 export class GetSessionUseCase {

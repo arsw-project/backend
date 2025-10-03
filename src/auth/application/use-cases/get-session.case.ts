@@ -8,14 +8,14 @@ import { Session } from '@auth/domain/entities/session.entity';
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
 import { error, ok, Result } from '@common/utility/results';
 import { Injectable } from '@nestjs/common';
-
-const sessionExpiresInSeconds = 60 * 60 * 24; // 24 hours
+import { SettingsClient } from '@settings/infrastructure/clients/settings.client';
 
 @Injectable()
 export class GetSessionUseCase {
 	constructor(
 		private readonly cryptoService: CryptoService,
 		private readonly sessionRepository: SessionRepository,
+		private readonly config: SettingsClient,
 	) {}
 
 	async execute(
@@ -62,7 +62,7 @@ export class GetSessionUseCase {
 
 		if (
 			now.getTime() - session.createdAt.getTime() >=
-			sessionExpiresInSeconds * 1000
+			this.config.sessionExpiresInSeconds * 1000
 		) {
 			await this.sessionRepository.deleteById(sessionId);
 			return null;

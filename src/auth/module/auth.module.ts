@@ -11,6 +11,7 @@ import { GoogleRestController } from '@auth/infrastructure/http/google-rest.cont
 import { SessionRestController } from '@auth/infrastructure/http/session-rest.controller';
 import { SessionMiddleware } from '@auth/infrastructure/middleware/session.middleware';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { SettingsClient } from '@settings/infrastructure/clients/settings.client';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { UsersModule } from '@users/module/users.module';
 
@@ -28,10 +29,11 @@ import { UsersModule } from '@users/module/users.module';
 			useFactory: (
 				cryptoService: CryptoService,
 				sessionRepository: SessionRepository,
+				config: SettingsClient,
 			) => {
-				return new GetSessionUseCase(cryptoService, sessionRepository);
+				return new GetSessionUseCase(cryptoService, sessionRepository, config);
 			},
-			inject: [CryptoService, SessionRepository],
+			inject: [CryptoService, SessionRepository, SettingsClient],
 		},
 		{
 			provide: CreateSessionUseCase,

@@ -27,7 +27,8 @@
 			"@users/*": ["src/users/*"],
 			"@auth/*": ["src/auth/*"],
 			"@common/*": ["src/common/*"],
-			"@drizzle/*": ["src/drizzle/*"]
+			"@drizzle/*": ["src/drizzle/*"],
+			"@settings/*": ["src/settings/*"]
 		}
 	}
 }

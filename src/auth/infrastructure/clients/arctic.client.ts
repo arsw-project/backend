@@ -21,7 +21,7 @@ export class ArcticService {
 		this.googleClient = new Google(
 			process.env.GOOGLE_CLIENT_ID,
 			process.env.GOOGLE_CLIENT_SECRET,
-			`http://${process.env.HOST}/auth/google/login/callback`,
+			`${process.env.HOST}/auth/google/login/callback`,
 		);
 	}
 

@@ -6,6 +6,7 @@ import { HealthModule } from '@health/module/health.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { SettingsModule } from '@settings/module/settings.module';
 import { UsersModule } from '@users/module/users.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { UsersModule } from '@users/module/users.module';
 		ConfigModule.forRoot({
 			envFilePath: '.env',
 		}),
+		SettingsModule,
 		DrizzleModule,
 		HealthModule,
 		UsersModule,

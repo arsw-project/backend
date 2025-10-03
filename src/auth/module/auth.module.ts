@@ -82,6 +82,7 @@ import { UsersModule } from '@users/module/users.module';
 		},
 	],
 	controllers: [GoogleRestController, SessionRestController],
+	exports: [SessionRepository, GetSessionUseCase],
 })
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {

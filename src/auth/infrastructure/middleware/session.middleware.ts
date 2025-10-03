@@ -3,7 +3,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { SessionUserDto } from '@users/application/dto/session-user.dto';
 import { NextFunction, Request, Response } from 'express';
 
-interface RequestWithUser extends Request {
+export interface RequestWithUser extends Request {
 	user: SessionUserDto | null;
 }
 

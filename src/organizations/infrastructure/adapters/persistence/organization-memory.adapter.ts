@@ -47,4 +47,26 @@ export class OrganizationMemoryAdapter extends OrganizationRepository {
 	findAll(): Promise<Organization[]> {
 		return Promise.resolve(this.organizations);
 	}
+
+	async update(
+		id: string,
+		update: Partial<CreateOrganizationDto>,
+	): Promise<Organization | null> {
+		const idx = this.organizations.findIndex((o) => o.id === id);
+		if (idx === -1) return Promise.resolve(null);
+		const now = new Date();
+		this.organizations[idx] = {
+			...this.organizations[idx],
+			...update,
+			updatedAt: now,
+		};
+		return Promise.resolve(this.organizations[idx]);
+	}
+
+	async delete(id: string): Promise<void> {
+		const idx = this.organizations.findIndex((o) => o.id === id);
+		if (idx === -1) return Promise.resolve();
+		this.organizations.splice(idx, 1);
+		return Promise.resolve();
+	}
 }

@@ -3,8 +3,8 @@ import { DrizzleModule } from '@drizzle/module/drizzle.module';
 import { HealthModule } from '@health/module/health.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { UsersModule } from '@users/module/users.module';
 import { OrganizationsModule } from '@organizations/module/organizations.module';
+import { UsersModule } from '@users/module/users.module';
 
 @Module({
 	imports: [

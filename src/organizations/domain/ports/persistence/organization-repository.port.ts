@@ -14,5 +14,12 @@ export abstract class OrganizationRepository {
 		organizationDto: CreateOrganizationDto,
 	): Promise<boolean>;
 
+	abstract update(
+		id: string,
+		update: Partial<CreateOrganizationDto>,
+	): Promise<Organization | null>;
+
+	abstract delete(id: string): Promise<void>;
+
 	abstract findAll(): Promise<Organization[]>;
 }

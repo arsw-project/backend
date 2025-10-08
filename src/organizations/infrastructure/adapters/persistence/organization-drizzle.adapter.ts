@@ -69,4 +69,28 @@ export class OrganizationDrizzleAdapter implements OrganizationRepository {
 
 		return organizations as unknown as Organization[];
 	}
+
+	async update(
+		id: string,
+		update: Partial<CreateOrganizationDto>,
+	): Promise<Organization | null> {
+		const now = new Date();
+		const [updated] = await this.drizzleConnection.database
+			.update(organizationsTable)
+			.set({
+				...update,
+				updatedAt: now as unknown as Date,
+			})
+			.where(eq(organizationsTable.id, id))
+			.returning();
+
+		if (!updated) return null;
+		return updated as unknown as Organization;
+	}
+
+	async delete(id: string): Promise<void> {
+		await this.drizzleConnection.database
+			.delete(organizationsTable)
+			.where(eq(organizationsTable.id, id));
+	}
 }

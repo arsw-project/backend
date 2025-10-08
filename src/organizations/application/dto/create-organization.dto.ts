@@ -8,3 +8,7 @@ export const createOrganizationSchema = z
 	.required();
 
 export type CreateOrganizationDto = z.infer<typeof createOrganizationSchema>;
+
+export const updateOrganizationSchema = createOrganizationSchema.partial();
+
+export type UpdateOrganizationDto = z.infer<typeof updateOrganizationSchema>;

@@ -41,7 +41,6 @@ export class ConsoleLoggerAdapter extends ConsoleLogger implements LoggerPort {
 				case 'fatal':
 					super.fatal(message, context);
 					break;
-				case 'log':
 				default:
 					super.log(message, context);
 					break;

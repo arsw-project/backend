@@ -9,6 +9,11 @@ import { Injectable } from '@nestjs/common';
  * @property googleLoginRedirect - The redirect URI used after Google login.
  * @property sessionExpiresInSeconds - The duration (in seconds) for which a session remains valid.
  * @property host - The host address for the application.
+ * @property loggingConsoleEnabled - Whether console logging is enabled.
+ * @property loggingFileEnabled - Whether file logging is enabled.
+ * @property loggingFilePath - The path for the log file.
+ * @property loggingExternalEnabled - Whether external logging is enabled.
+ * @property loggingExternalUrl - The URL for external logging.
  */
 export abstract class SettingsClientOptions {
 	abstract drizzleDatabaseUrl: string;
@@ -17,6 +22,11 @@ export abstract class SettingsClientOptions {
 	abstract googleLoginRedirect: string;
 	abstract sessionExpiresInSeconds: number;
 	abstract host: string;
+	abstract loggingConsoleEnabled: boolean;
+	abstract loggingFileEnabled: boolean;
+	abstract loggingFilePath: string;
+	abstract loggingExternalEnabled: boolean;
+	abstract loggingExternalUrl: string;
 }
 
 @Injectable()
@@ -27,6 +37,11 @@ export class SettingsClient extends SettingsClientOptions {
 	public readonly googleLoginRedirect: string;
 	public readonly sessionExpiresInSeconds: number;
 	public readonly host: string;
+	public readonly loggingConsoleEnabled: boolean;
+	public readonly loggingFileEnabled: boolean;
+	public readonly loggingFilePath: string;
+	public readonly loggingExternalEnabled: boolean;
+	public readonly loggingExternalUrl: string;
 
 	constructor() {
 		super();
@@ -57,5 +72,12 @@ export class SettingsClient extends SettingsClientOptions {
 		this.googleLoginRedirect = process.env.GOOGLE_LOGIN_REDIRECT;
 		this.sessionExpiresInSeconds = 60 * 60 * 24; // 24 hours
 		this.host = process.env.HOST;
+		this.loggingConsoleEnabled =
+			process.env.LOGGING_CONSOLE_ENABLED !== 'false'; // default true
+		this.loggingFileEnabled = process.env.LOGGING_FILE_ENABLED === 'true'; // default false
+		this.loggingFilePath = process.env.LOGGING_FILE_PATH || 'logs/app.log';
+		this.loggingExternalEnabled =
+			process.env.LOGGING_EXTERNAL_ENABLED === 'true'; // default false
+		this.loggingExternalUrl = process.env.LOGGING_EXTERNAL_URL || '';
 	}
 }

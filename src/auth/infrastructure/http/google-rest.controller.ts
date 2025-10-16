@@ -1,5 +1,5 @@
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
-import { ArcticService } from '@auth/infrastructure/clients/arctic.client';
+import { ArcticClient } from '@auth/infrastructure/clients/arctic.client';
 import {
 	BadRequestException,
 	Controller,
@@ -26,7 +26,7 @@ export class GoogleRestController {
 	private readonly logger = new Logger(GoogleRestController.name);
 
 	constructor(
-		private readonly arcticService: ArcticService,
+		private readonly arcticClient: ArcticClient,
 		private readonly loginGoogleUserUseCase: LoginGoogleUserUseCase,
 	) {}
 
@@ -34,7 +34,7 @@ export class GoogleRestController {
 	@Redirect()
 	emailLogin(@Res({ passthrough: true }) response: Response) {
 		const { codeVerifier, state, url } =
-			this.arcticService.createGoogleAuthURL();
+			this.arcticClient.createGoogleAuthURL();
 
 		response.cookie('google_oauth_state', state, {
 			path: '/',
@@ -84,7 +84,7 @@ export class GoogleRestController {
 
 		let tokens: OAuth2Tokens;
 		try {
-			tokens = await this.arcticService.googleClient.validateAuthorizationCode(
+			tokens = await this.arcticClient.googleClient.validateAuthorizationCode(
 				code,
 				codeVerifier,
 			);

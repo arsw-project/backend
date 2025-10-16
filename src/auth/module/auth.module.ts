@@ -6,7 +6,7 @@ import { LoginEmailUserUseCase } from '@auth/application/use-cases/login-email-u
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
 import { SessionMemoryAdapter } from '@auth/infrastructure/adapters/persistence/session-memory.adapter';
-import { ArcticService } from '@auth/infrastructure/clients/arctic.client';
+import { ArcticClient } from '@auth/infrastructure/clients/arctic.client';
 import { GoogleRestController } from '@auth/infrastructure/http/google-rest.controller';
 import { SessionRestController } from '@auth/infrastructure/http/session-rest.controller';
 import { SessionMiddleware } from '@auth/infrastructure/middleware/session.middleware';
@@ -18,7 +18,7 @@ import { UsersModule } from '@users/module/users.module';
 @Module({
 	imports: [UsersModule],
 	providers: [
-		ArcticService,
+		ArcticClient,
 		CryptoService,
 		{
 			provide: SessionRepository,

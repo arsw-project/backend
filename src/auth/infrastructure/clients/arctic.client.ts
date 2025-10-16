@@ -8,7 +8,7 @@ interface GoogleAuthData {
 }
 
 @Injectable()
-export class ArcticService {
+export class ArcticClient {
 	public readonly googleClient: Google;
 
 	constructor() {

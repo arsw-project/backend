@@ -1,3 +1,4 @@
+import { LoggerPort } from '@logging/domain/ports/services/logger.port';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app/module/app.module';
@@ -5,6 +6,7 @@ import { AppModule } from './app/module/app.module';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 	app.use(cookieParser());
+	app.useLogger(app.get(LoggerPort));
 	await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

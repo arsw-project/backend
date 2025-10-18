@@ -75,7 +75,7 @@ export class SettingsClient extends SettingsClientOptions {
 		this.loggingConsoleEnabled =
 			process.env.LOGGING_CONSOLE_ENABLED !== 'false'; // default true
 		this.loggingFileEnabled = process.env.LOGGING_FILE_ENABLED === 'true'; // default false
-		this.loggingFilePath = process.env.LOGGING_FILE_PATH || 'logs/app.log';
+		this.loggingFilePath = process.env.LOGGING_FILE_FOLDER || 'logs';
 		this.loggingExternalEnabled =
 			process.env.LOGGING_EXTERNAL_ENABLED === 'true'; // default false
 		this.loggingExternalUrl = process.env.LOGGING_EXTERNAL_URL || '';

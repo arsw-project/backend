@@ -1,53 +1,103 @@
-import { LoggerPort } from '@logging/domain/ports/services/logger.port';
+import {
+	LoggerPort,
+	LogLevel,
+} from '@logging/domain/ports/services/logger.port';
+import type { ConsoleLoggerOptions } from '@nestjs/common';
 import { ConsoleLogger, Injectable } from '@nestjs/common';
 
+export interface ConsoleLoggerAdapterOptions extends ConsoleLoggerOptions {
+	/**
+	 * Enabled log levels.
+	 */
+	logLevels?: LogLevel[];
+}
+
+/**
+ * Console logger adapter that extends NestJS ConsoleLogger and implements LoggerPort.
+ * This adapter follows the NestJS logger interface natively.
+ */
 @Injectable()
 export class ConsoleLoggerAdapter extends ConsoleLogger implements LoggerPort {
-	// Handle both NestJS and LoggerPort signatures
-	log(
-		messageOrLevel: string | unknown,
-		contextOrMessage?: string | unknown,
-		maybeContext?: string,
-		maybeStack?: string,
-	): void {
-		// Check if this is being called with LoggerPort signature
-		// LoggerPort: log(level: string, message: string, context?: string, stack?: string)
-		// NestJS: log(message: any, context?: string)
-		if (
-			typeof messageOrLevel === 'string' &&
-			typeof contextOrMessage === 'string' &&
-			maybeContext !== undefined
-		) {
-			// LoggerPort signature: log(level, message, context?, stack?)
-			const level = messageOrLevel;
-			const message = contextOrMessage;
-			const context = maybeContext;
-			const stack = maybeStack;
+	constructor(context?: string, options?: ConsoleLoggerAdapterOptions) {
+		super(context ?? '', options ?? {});
+	}
 
-			// Map to NestJS ConsoleLogger methods based on level
-			switch (level.toLowerCase()) {
-				case 'error':
-					super.error(message, stack, context);
-					break;
-				case 'warn':
-					super.warn(message, context);
-					break;
-				case 'debug':
-					super.debug(message, context);
-					break;
-				case 'verbose':
-					super.verbose(message, context);
-					break;
-				case 'fatal':
-					super.fatal(message, context);
-					break;
-				default:
-					super.log(message, context);
-					break;
-			}
-		} else {
-			// NestJS signature: log(message, context?)
-			super.log(messageOrLevel, contextOrMessage as string | undefined);
-		}
+	/**
+	 * Write a 'log' level log.
+	 * Prints to `stdout` with newline.
+	 */
+	log(message: unknown, ...optionalParams: unknown[]): void {
+		super.log(message, ...optionalParams);
+	}
+
+	/**
+	 * Write an 'error' level log.
+	 * Prints to `stderr` with newline.
+	 */
+	error(message: unknown, ...optionalParams: unknown[]): void {
+		super.error(message, ...optionalParams);
+	}
+
+	/**
+	 * Write a 'warn' level log.
+	 * Prints to `stdout` with newline.
+	 */
+	warn(message: unknown, ...optionalParams: unknown[]): void {
+		super.warn(message, ...optionalParams);
+	}
+
+	/**
+	 * Write a 'debug' level log.
+	 * Prints to `stdout` with newline.
+	 */
+	debug(message: unknown, ...optionalParams: unknown[]): void {
+		super.debug(message, ...optionalParams);
+	}
+
+	/**
+	 * Write a 'verbose' level log.
+	 * Prints to `stdout` with newline.
+	 */
+	verbose(message: unknown, ...optionalParams: unknown[]): void {
+		super.verbose(message, ...optionalParams);
+	}
+
+	/**
+	 * Write a 'fatal' level log.
+	 * Prints to `stdout` with newline.
+	 */
+	fatal(message: unknown, ...optionalParams: unknown[]): void {
+		super.fatal(message, ...optionalParams);
+	}
+
+	/**
+	 * Set log levels
+	 * @param levels log levels
+	 */
+	setLogLevels(levels: LogLevel[]): void {
+		super.setLogLevels(levels);
+	}
+
+	/**
+	 * Set logger context
+	 * @param context context
+	 */
+	setContext(context: string): void {
+		super.setContext(context);
+	}
+
+	/**
+	 * Resets the logger context to the value that was passed in the constructor.
+	 */
+	resetContext(): void {
+		super.resetContext();
+	}
+
+	/**
+	 * Check if a specific log level is enabled
+	 * @param level log level
+	 */
+	isLevelEnabled(level: LogLevel): boolean {
+		return super.isLevelEnabled(level);
 	}
 }

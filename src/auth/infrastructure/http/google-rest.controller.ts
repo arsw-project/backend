@@ -1,11 +1,11 @@
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
 import { ArcticClient } from '@auth/infrastructure/clients/arctic.client';
+import { LoggerPort } from '@logging/domain/ports/services/logger.port';
 import {
 	BadRequestException,
 	Controller,
 	Get,
 	HttpRedirectResponse,
-	Logger,
 	Redirect,
 	Req,
 	Res,
@@ -23,11 +23,10 @@ interface GoogleIdTokenClaims {
 
 @Controller('auth/google')
 export class GoogleRestController {
-	private readonly logger = new Logger(GoogleRestController.name);
-
 	constructor(
 		private readonly arcticClient: ArcticClient,
 		private readonly loginGoogleUserUseCase: LoginGoogleUserUseCase,
+		private readonly logger: LoggerPort,
 	) {}
 
 	@Get('login')

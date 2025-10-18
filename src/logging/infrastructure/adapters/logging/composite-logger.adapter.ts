@@ -1,58 +1,103 @@
-import { LoggerPort } from '@logging/domain/ports/services/logger.port';
+import {
+	LoggerPort,
+	LogLevel,
+} from '@logging/domain/ports/services/logger.port';
 import { Injectable } from '@nestjs/common';
 
+/**
+ * Composite logger adapter that delegates to multiple logger adapters.
+ * Allows logging to multiple destinations simultaneously.
+ */
 @Injectable()
 export class CompositeLoggerAdapter implements LoggerPort {
-	private readonly adapters: LoggerPort[];
+	constructor(private readonly adapters: LoggerPort[]) {}
 
-	constructor(adapters: LoggerPort[]) {
-		this.adapters = adapters;
+	/**
+	 * Write a 'log' level log to all adapters.
+	 */
+	log(message: unknown, ...optionalParams: unknown[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.log(message, ...optionalParams);
+		});
 	}
 
-	async log(
-		level: string,
-		message: string,
-		context?: string,
-		stack?: string,
-	): Promise<void> {
-		await Promise.all(
-			this.adapters.map((adapter) =>
-				adapter.log(level, message, context, stack),
-			),
-		);
+	/**
+	 * Write an 'error' level log to all adapters.
+	 */
+	error(message: unknown, ...optionalParams: unknown[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.error(message, ...optionalParams);
+		});
 	}
 
-	async error(
-		message: unknown,
-		stack?: string,
-		context?: string,
-	): Promise<void> {
-		await Promise.all(
-			this.adapters.map((adapter) => adapter.error(message, stack, context)),
-		);
+	/**
+	 * Write a 'warn' level log to all adapters.
+	 */
+	warn(message: unknown, ...optionalParams: unknown[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.warn(message, ...optionalParams);
+		});
 	}
 
-	async warn(message: string, context?: string): Promise<void> {
-		await Promise.all(
-			this.adapters.map((adapter) => adapter.warn(message, context)),
-		);
+	/**
+	 * Write a 'debug' level log to all adapters.
+	 */
+	debug(message: unknown, ...optionalParams: unknown[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.debug(message, ...optionalParams);
+		});
 	}
 
-	async debug(message: string, context?: string): Promise<void> {
-		await Promise.all(
-			this.adapters.map((adapter) => adapter.debug(message, context)),
-		);
+	/**
+	 * Write a 'verbose' level log to all adapters.
+	 */
+	verbose(message: unknown, ...optionalParams: unknown[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.verbose(message, ...optionalParams);
+		});
 	}
 
-	async verbose(message: string, context?: string): Promise<void> {
-		await Promise.all(
-			this.adapters.map((adapter) => adapter.verbose(message, context)),
-		);
+	/**
+	 * Write a 'fatal' level log to all adapters.
+	 */
+	fatal(message: unknown, ...optionalParams: unknown[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.fatal(message, ...optionalParams);
+		});
 	}
 
-	async fatal(message: string, context?: string): Promise<void> {
-		await Promise.all(
-			this.adapters.map((adapter) => adapter.fatal(message, context)),
-		);
+	/**
+	 * Set log levels for all adapters.
+	 */
+	setLogLevels(levels: LogLevel[]): void {
+		this.adapters.forEach((adapter) => {
+			adapter.setLogLevels(levels);
+		});
+	}
+
+	/**
+	 * Set context for all adapters.
+	 */
+	setContext(context: string): void {
+		this.adapters.forEach((adapter) => {
+			adapter.setContext(context);
+		});
+	}
+
+	/**
+	 * Reset context for all adapters.
+	 */
+	resetContext(): void {
+		this.adapters.forEach((adapter) => {
+			adapter.resetContext();
+		});
+	}
+
+	/**
+	 * Check if a specific log level is enabled.
+	 * Returns true if at least one adapter has the level enabled.
+	 */
+	isLevelEnabled(level: LogLevel): boolean {
+		return this.adapters.some((adapter) => adapter.isLevelEnabled(level));
 	}
 }

@@ -365,6 +365,43 @@ describe('CreateUserUseCase', () => {
 	});
 
 	describe('execute - edge cases', () => {
+		it('should handle non-local user without providerId by checking with empty string', async () => {
+			// Arrange
+			const createUserDto: CreateUserDto = {
+				name: 'Social User',
+				email: 'social@example.com',
+				password: 'password123',
+				authProvider: 'google',
+				providerId: null,
+			};
+
+			vi.mocked(mockUserRepository.findByEmail).mockResolvedValue(null);
+			vi.mocked(mockUserRepository.findByProviderId).mockResolvedValue(null);
+			vi.mocked(mockCryptoService.hashPassword).mockResolvedValue('hashed');
+			vi.mocked(mockUserRepository.create).mockResolvedValue({
+				id: 'user-789',
+				name: 'Social User',
+				email: 'social@example.com',
+				password: 'hashed',
+				authProvider: 'google',
+				providerId: null,
+				role: 'user',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+
+			// Act
+			const result = await createUserUseCase.execute(createUserDto);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			expect(mockUserRepository.findByProviderId).toHaveBeenCalledWith(
+				'google',
+				'',
+			);
+			expect(mockUserRepository.create).toHaveBeenCalled();
+		});
+
 		it('should handle concurrent conflict checks correctly', async () => {
 			// Arrange
 			const createUserDto: CreateUserDto = {

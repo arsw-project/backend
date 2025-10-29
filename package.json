@@ -18,9 +18,9 @@
 		"lint": "biome check",
 		"type-check": "tsc --noEmit",
 		"test": "vitest --run --passWithNoTests",
-		"test:ui": "vitest --ui",
+		"test:ui": "vitest --coverage --ui",
 		"test:watch": "vitest --watch",
-		"test:cov": "vitest --coverage",
+		"test:cov": "vitest --run --coverage",
 		"prepare": "husky"
 	},
 	"dependencies": {

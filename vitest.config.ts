@@ -5,6 +5,10 @@ export default defineConfig({
 	test: {
 		coverage: {
 			provider: 'v8',
+			thresholds: {
+				'**/*.case.ts': { 100: true },
+				'**/*.service.ts': { 100: true },
+			},
 		},
 	},
 	resolve: {

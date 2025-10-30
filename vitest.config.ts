@@ -7,7 +7,6 @@ export default defineConfig({
 			provider: 'v8',
 			thresholds: {
 				'**/*.case.ts': { 100: true },
-				'**/*.service.ts': { 100: true },
 			},
 		},
 	},

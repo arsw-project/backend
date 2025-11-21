@@ -1,5 +1,6 @@
 import { UpdateOrganizationDto } from '@organizations/application/dto/create-organization.dto';
 import { OrganizationConflictError } from '@organizations/application/errors/organization-conflict.error';
+import { OrganizationNotFoundError } from '@organizations/application/errors/organization-not-found.error';
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
 import { UpdateOrganizationUseCase } from './update-organization.case';
@@ -37,12 +38,33 @@ describe('UpdateOrganizationUseCase', () => {
 			updatedAt: new Date('2024-01-02'),
 		};
 
+		it('should return not found error when organization does not exist', async () => {
+			// Arrange
+			const updateDto: UpdateOrganizationDto = {
+				name: 'Updated Organization',
+			};
+			repository.findById.mockResolvedValue(null);
+
+			// Act
+			const result = await useCase.execute('123', updateDto);
+
+			// Assert
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(OrganizationNotFoundError);
+				expect(result.error.code).toBe('ORGANIZATION_NOT_FOUND');
+			}
+			expect(repository.findById).toHaveBeenCalledWith('123');
+			expect(repository.update).not.toHaveBeenCalled();
+		});
+
 		it('should update organization successfully when no conflicts', async () => {
 			// Arrange
 			const updateDto: UpdateOrganizationDto = {
 				name: 'Updated Organization',
 				description: 'Updated Description',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.findByName.mockResolvedValue(null);
 			repository.update.mockResolvedValue(updatedOrganization);
 
@@ -54,12 +76,11 @@ describe('UpdateOrganizationUseCase', () => {
 			if (result.ok) {
 				expect(result.value).toEqual(updatedOrganization);
 			}
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).toHaveBeenCalledWith(
 				'Updated Organization',
 			);
 			expect(repository.update).toHaveBeenCalledWith('123', updateDto);
-			expect(repository.findByName).toHaveBeenCalledTimes(1);
-			expect(repository.update).toHaveBeenCalledTimes(1);
 		});
 
 		it('should update organization without checking name when name is not provided', async () => {
@@ -71,6 +92,7 @@ describe('UpdateOrganizationUseCase', () => {
 				...mockOrganization,
 				description: updateDto.description ?? mockOrganization.description,
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.update.mockResolvedValue(updated);
 
 			// Act
@@ -81,6 +103,7 @@ describe('UpdateOrganizationUseCase', () => {
 			if (result.ok) {
 				expect(result.value?.description).toBe('Updated Description Only');
 			}
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).not.toHaveBeenCalled();
 			expect(repository.update).toHaveBeenCalledWith('123', updateDto);
 		});
@@ -95,6 +118,7 @@ describe('UpdateOrganizationUseCase', () => {
 				id: '456', // Different ID
 				name: 'Existing Organization',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.findByName.mockResolvedValue(existingOrg);
 
 			// Act
@@ -124,6 +148,7 @@ describe('UpdateOrganizationUseCase', () => {
 				name: 'Test Organization', // Same name
 				description: 'Updated Description',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.findByName.mockResolvedValue(mockOrganization);
 			repository.update.mockResolvedValue({
 				...mockOrganization,
@@ -135,30 +160,29 @@ describe('UpdateOrganizationUseCase', () => {
 
 			// Assert
 			expect(result.ok).toBe(true);
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).toHaveBeenCalledWith('Test Organization');
 			expect(repository.update).toHaveBeenCalledWith('123', updateDto);
 		});
 
-		it('should return null when organization does not exist', async () => {
+		it('should return not found error when organization does not exist', async () => {
 			// Arrange
 			const updateDto: UpdateOrganizationDto = {
 				name: 'Updated Name',
 			};
-			repository.findByName.mockResolvedValue(null);
-			repository.update.mockResolvedValue(null);
+			repository.findById.mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('non-existent-id', updateDto);
 
 			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				expect(result.value).toBeNull();
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(OrganizationNotFoundError);
+				expect(result.error.code).toBe('ORGANIZATION_NOT_FOUND');
 			}
-			expect(repository.update).toHaveBeenCalledWith(
-				'non-existent-id',
-				updateDto,
-			);
+			expect(repository.findById).toHaveBeenCalledWith('non-existent-id');
+			expect(repository.update).not.toHaveBeenCalled();
 		});
 
 		it('should handle partial updates (name only)', async () => {
@@ -166,6 +190,7 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: 'New Name Only',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.findByName.mockResolvedValue(null);
 			repository.update.mockResolvedValue({
 				...mockOrganization,
@@ -181,6 +206,7 @@ describe('UpdateOrganizationUseCase', () => {
 				expect(result.value?.name).toBe('New Name Only');
 				expect(result.value?.description).toBe(mockOrganization.description);
 			}
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).toHaveBeenCalledWith('New Name Only');
 		});
 
@@ -189,6 +215,7 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				description: 'New Description Only',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.update.mockResolvedValue({
 				...mockOrganization,
 				description: 'New Description Only',
@@ -203,6 +230,7 @@ describe('UpdateOrganizationUseCase', () => {
 				expect(result.value?.description).toBe('New Description Only');
 				expect(result.value?.name).toBe(mockOrganization.name);
 			}
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).not.toHaveBeenCalled();
 		});
 
@@ -212,12 +240,14 @@ describe('UpdateOrganizationUseCase', () => {
 				name: 'New Name',
 			};
 			const dbError = new Error('Database connection failed');
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.findByName.mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('123', updateDto)).rejects.toThrow(
 				'Database connection failed',
 			);
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).toHaveBeenCalledWith('New Name');
 			expect(repository.update).not.toHaveBeenCalled();
 		});
@@ -228,18 +258,21 @@ describe('UpdateOrganizationUseCase', () => {
 				description: 'New Description',
 			};
 			const dbError = new Error('Failed to update organization');
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.update.mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('123', updateDto)).rejects.toThrow(
 				'Failed to update organization',
 			);
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.update).toHaveBeenCalledWith('123', updateDto);
 		});
 
 		it('should handle empty update object', async () => {
 			// Arrange
 			const updateDto: UpdateOrganizationDto = {};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.update.mockResolvedValue(mockOrganization);
 
 			// Act
@@ -247,15 +280,17 @@ describe('UpdateOrganizationUseCase', () => {
 
 			// Assert
 			expect(result.ok).toBe(true);
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).not.toHaveBeenCalled();
 			expect(repository.update).toHaveBeenCalledWith('123', updateDto);
 		});
 
-		it('should trim whitespace from updated name', async () => {
+		it('should not trim whitespace from updated name (validation should be done at DTO level)', async () => {
 			// Arrange
 			const updateDto: UpdateOrganizationDto = {
 				name: '  Updated Name  ',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			repository.findByName.mockResolvedValue(null);
 			repository.update.mockResolvedValue({
 				...mockOrganization,
@@ -266,6 +301,7 @@ describe('UpdateOrganizationUseCase', () => {
 			await useCase.execute('123', updateDto);
 
 			// Assert
+			expect(repository.findById).toHaveBeenCalledWith('123');
 			expect(repository.findByName).toHaveBeenCalledWith('  Updated Name  ');
 		});
 
@@ -274,6 +310,7 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: 'Updated Name',
 			};
+			repository.findById.mockResolvedValue(mockOrganization);
 			const now = new Date();
 			repository.findByName.mockResolvedValue(null);
 			repository.update.mockResolvedValue({

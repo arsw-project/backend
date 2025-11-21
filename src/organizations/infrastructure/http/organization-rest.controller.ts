@@ -6,6 +6,8 @@ import {
 	Controller,
 	Delete,
 	Get,
+	HttpCode,
+	HttpStatus,
 	InternalServerErrorException,
 	NotFoundException,
 	Param,
@@ -70,6 +72,7 @@ export class OrganizationRestController {
 
 	@Post()
 	@UsePipes(new ZodValidationPipe(createOrganizationSchema))
+	@HttpCode(HttpStatus.CREATED)
 	async createOrganization(
 		@Body() createOrganizationDto: CreateOrganizationDto,
 	) {
@@ -155,6 +158,7 @@ export class OrganizationRestController {
 	}
 
 	@Delete(':id')
+	@HttpCode(HttpStatus.NO_CONTENT)
 	async deleteOrganization(@Param('id') id: string) {
 		const result = await this.deleteOrganizationUseCase.execute(id);
 
@@ -174,7 +178,5 @@ export class OrganizationRestController {
 
 			throw new InternalServerErrorException();
 		}
-
-		return { deleted: true };
 	}
 }

@@ -1,0 +1,23 @@
+import { AuthModule } from '@auth/module/auth.module';
+import { DrizzleModule } from '@drizzle/module/drizzle.module';
+import { HealthModule } from '@health/module/health.module';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { OrganizationsModule } from '@organizations/module/organizations.module';
+import { UsersModule } from '@users/module/users.module';
+
+@Module({
+	imports: [
+		ConfigModule.forRoot({
+			envFilePath: '.env',
+		}),
+		DrizzleModule,
+		HealthModule,
+		UsersModule,
+		OrganizationsModule,
+		AuthModule,
+	],
+	controllers: [],
+	providers: [],
+})
+export class AppModule {}

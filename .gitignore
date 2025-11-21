@@ -2,6 +2,7 @@
 /dist
 /node_modules
 /build
+drizzle-out/
 
 # Logs
 logs
@@ -29,7 +30,7 @@ lerna-debug.log*
 *.sublime-workspace
 
 # IDE - VSCode
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -51,6 +52,9 @@ pids
 *.pid
 *.seed
 *.pid.lock
+
+# Local files
+local/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

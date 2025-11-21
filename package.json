@@ -12,6 +12,9 @@
 		"start:dev": "nest start --watch",
 		"start:debug": "nest start --debug --watch",
 		"start:prod": "node dist/main",
+		"drizzle:push": "pnpm drizzle-kit push --config src/drizzle/infrastructure/drizzle.config.ts",
+		"drizzle:generate": "pnpm drizzle-kit generate --config src/drizzle/infrastructure/drizzle.config.ts",
+		"drizzle:studio": "pnpm drizzle-kit studio --config src/drizzle/infrastructure/drizzle.config.ts",
 		"lint": "biome check",
 		"type-check": "tsc --noEmit",
 		"test": "jest --passWithNoTests",
@@ -23,10 +26,17 @@
 	},
 	"dependencies": {
 		"@nestjs/common": "^11.0.1",
+		"@nestjs/config": "^4.0.2",
 		"@nestjs/core": "^11.0.1",
 		"@nestjs/platform-express": "^11.0.1",
+		"arctic": "^3.7.0",
+		"cookie-parser": "^1.4.7",
+		"dotenv": "^17.2.2",
+		"drizzle-orm": "^0.44.5",
+		"postgres": "^3.4.7",
 		"reflect-metadata": "^0.2.2",
-		"rxjs": "^7.8.1"
+		"rxjs": "^7.8.1",
+		"zod": "^4.1.8"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
@@ -35,10 +45,12 @@
 		"@nestjs/cli": "^11.0.0",
 		"@nestjs/schematics": "^11.0.0",
 		"@nestjs/testing": "^11.0.1",
+		"@types/cookie-parser": "^1.4.9",
 		"@types/express": "^5.0.0",
 		"@types/jest": "^30.0.0",
 		"@types/node": "^22.10.7",
 		"@types/supertest": "^6.0.2",
+		"drizzle-kit": "^0.31.4",
 		"globals": "^16.0.0",
 		"husky": "^9.1.7",
 		"jest": "^30.0.0",
@@ -65,7 +77,16 @@
 			"**/*.(t|j)s"
 		],
 		"coverageDirectory": "../coverage",
-		"testEnvironment": "node"
+		"testEnvironment": "node",
+		"moduleNameMapper": {
+			"^@app/(.*)$": "<rootDir>/app/$1",
+			"^@health/(.*)$": "<rootDir>/health/$1",
+			"^@users/(.*)$": "<rootDir>/users/$1",
+			"^@organizations/(.*)$": "<rootDir>/organizations/$1",
+			"^@auth/(.*)$": "<rootDir>/auth/$1",
+			"^@common/(.*)$": "<rootDir>/common/$1",
+			"^@drizzle/(.*)$": "<rootDir>/drizzle/$1"
+		}
 	},
 	"commitlint": {
 		"extends": [

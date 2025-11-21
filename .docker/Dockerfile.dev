@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+# Set workdir
+WORKDIR /usr/src/app
+
+# Install build tools and pnpm
+RUN npm install -g pnpm
+
+# Copy package manifests first for cached installs
+COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies (honor lockfile)
+RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Copy source
+COPY . .
+
+EXPOSE 3000
+
+# Default command for development (Nest watch)
+CMD ["pnpm", "run", "start:dev"]

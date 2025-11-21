@@ -22,7 +22,13 @@
 		"strictBindCallApply": false,
 		"noFallthroughCasesInSwitch": false,
 		"paths": {
-			"@/*": ["src/*"]
+			"@app/*": ["src/app/*"],
+			"@health/*": ["src/health/*"],
+			"@users/*": ["src/users/*"],
+			"@organizations/*": ["src/organizations/*"],
+			"@auth/*": ["src/auth/*"],
+			"@common/*": ["src/common/*"],
+			"@drizzle/*": ["src/drizzle/*"]
 		}
 	}
 }

@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.dev
+    container_name: nexus-backend-dev
+    env_file:
+      - ../.env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../:/usr/src/app:cached
+      - /usr/src/app/node_modules
+    networks:
+      - nexus-network
+    tty: true
+    stdin_open: true
+    restart: 'no'
+
+networks:
+  nexus-network:
+    external: true

@@ -77,7 +77,16 @@
 			"**/*.(t|j)s"
 		],
 		"coverageDirectory": "../coverage",
-		"testEnvironment": "node"
+		"testEnvironment": "node",
+		"moduleNameMapper": {
+			"^@app/(.*)$": "<rootDir>/app/$1",
+			"^@health/(.*)$": "<rootDir>/health/$1",
+			"^@users/(.*)$": "<rootDir>/users/$1",
+			"^@organizations/(.*)$": "<rootDir>/organizations/$1",
+			"^@auth/(.*)$": "<rootDir>/auth/$1",
+			"^@common/(.*)$": "<rootDir>/common/$1",
+			"^@drizzle/(.*)$": "<rootDir>/drizzle/$1"
+		}
 	},
 	"commitlint": {
 		"extends": [

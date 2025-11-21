@@ -7,9 +7,11 @@ import {
 	Delete,
 	Get,
 	InternalServerErrorException,
+	NotFoundException,
 	Param,
 	Patch,
 	Post,
+	Query,
 	UsePipes,
 } from '@nestjs/common';
 import {
@@ -37,7 +39,26 @@ export class OrganizationRestController {
 	) {}
 
 	@Get()
-	async getAllOrganizations() {
+	async getAllOrganizations(@Query('name') name?: string) {
+		// Si se proporciona el parámetro name, buscar por nombre
+		if (name) {
+			const result = await this.getOrganizationByNameUseCase.execute(name);
+
+			if (!result.ok) {
+				throw new InternalServerErrorException();
+			}
+
+			if (!result.value) {
+				throw new NotFoundException({
+					message: 'Organization not found',
+					code: 'ORGANIZATION_NOT_FOUND',
+				});
+			}
+
+			return { organization: result.value };
+		}
+
+		// Si no hay parámetros, devolver todas las organizaciones
 		const result = await this.getAllOrganizationsUseCase.execute();
 
 		if (!result.ok) {
@@ -87,22 +108,10 @@ export class OrganizationRestController {
 		}
 
 		if (!result.value) {
-			return { organization: null };
-		}
-
-		return { organization: result.value };
-	}
-
-	@Get('by-name/:name')
-	async getByName(@Param('name') name: string) {
-		const result = await this.getOrganizationByNameUseCase.execute(name);
-
-		if (!result.ok) {
-			throw new InternalServerErrorException();
-		}
-
-		if (!result.value) {
-			return { organization: null };
+			throw new NotFoundException({
+				message: 'Organization not found',
+				code: 'ORGANIZATION_NOT_FOUND',
+			});
 		}
 
 		return { organization: result.value };
@@ -132,6 +141,11 @@ export class OrganizationRestController {
 						code: err.code,
 						errors: err.issues,
 					});
+				case 'ORGANIZATION_NOT_FOUND':
+					throw new NotFoundException({
+						message: err.message,
+						code: err.code,
+					});
 			}
 
 			throw new InternalServerErrorException();
@@ -145,6 +159,19 @@ export class OrganizationRestController {
 		const result = await this.deleteOrganizationUseCase.execute(id);
 
 		if (!result.ok) {
+			const err = result.error;
+			if (!ApplicationError.isApplicationError(err)) {
+				throw new InternalServerErrorException();
+			}
+
+			switch (err.code) {
+				case 'ORGANIZATION_NOT_FOUND':
+					throw new NotFoundException({
+						message: err.message,
+						code: err.code,
+					});
+			}
+
 			throw new InternalServerErrorException();
 		}
 

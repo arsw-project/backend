@@ -8,6 +8,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { SettingsModule } from '@settings/module/settings.module';
+import { OrganizationsModule } from '@organizations/module/organizations.module';
 import { UsersModule } from '@users/module/users.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { UsersModule } from '@users/module/users.module';
 		DrizzleModule,
 		HealthModule,
 		UsersModule,
+		OrganizationsModule,
 		AuthModule,
 		LoggingModule,
 	],

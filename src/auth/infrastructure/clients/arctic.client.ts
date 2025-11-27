@@ -8,7 +8,7 @@ interface GoogleAuthData {
 }
 
 @Injectable()
-export class ArcticService {
+export class ArcticClient {
 	public readonly googleClient: Google;
 
 	constructor() {
@@ -21,7 +21,7 @@ export class ArcticService {
 		this.googleClient = new Google(
 			process.env.GOOGLE_CLIENT_ID,
 			process.env.GOOGLE_CLIENT_SECRET,
-			'http://localhost:3000/auth/google/login/callback',
+			`${process.env.HOST}/auth/google/login/callback`,
 		);
 	}
 

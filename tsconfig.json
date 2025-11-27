@@ -28,7 +28,9 @@
 			"@organizations/*": ["src/organizations/*"],
 			"@auth/*": ["src/auth/*"],
 			"@common/*": ["src/common/*"],
-			"@drizzle/*": ["src/drizzle/*"]
+			"@drizzle/*": ["src/drizzle/*"],
+			"@settings/*": ["src/settings/*"],
+			"@logging/*": ["src/logging/*"]
 		}
 	}
 }

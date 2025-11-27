@@ -1,3 +1,4 @@
+import { Role } from '@auth/infrastructure/decorators/role.decorator';
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
@@ -24,6 +25,7 @@ export class UserRestController {
 	) {}
 
 	@Get()
+	@Role('admin')
 	async getAllUsers() {
 		const result = await this.getAllUsersUseCase.execute();
 
@@ -36,6 +38,7 @@ export class UserRestController {
 
 	@Post()
 	@UsePipes(new ZodValidationPipe(createUserSchema))
+	@Role('admin')
 	async createUser(@Body() createUserDto: CreateUserDto) {
 		const result = await this.createUserUseCase.execute(createUserDto);
 

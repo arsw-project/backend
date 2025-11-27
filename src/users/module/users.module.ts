@@ -1,3 +1,4 @@
+import { CryptoService } from '@auth/application/services/crypto.service';
 import { Module } from '@nestjs/common';
 import { CreateUserUseCase } from '@users/application/use-cases/create-user.case';
 import { GetAllUsersUseCase } from '@users/application/use-cases/get-all-users.case';
@@ -13,6 +14,7 @@ const UserRepositoryProvider = {
 @Module({
 	providers: [
 		UserRepositoryProvider,
+		CryptoService,
 		{
 			provide: GetAllUsersUseCase,
 			useFactory: (userRepository: UserRepository) => {
@@ -22,10 +24,13 @@ const UserRepositoryProvider = {
 		},
 		{
 			provide: CreateUserUseCase,
-			useFactory: (userRepository: UserRepository) => {
-				return new CreateUserUseCase(userRepository);
+			useFactory: (
+				userRepository: UserRepository,
+				cryptoService: CryptoService,
+			) => {
+				return new CreateUserUseCase(userRepository, cryptoService);
 			},
-			inject: [UserRepository],
+			inject: [UserRepository, CryptoService],
 		},
 	],
 	controllers: [UserRestController],

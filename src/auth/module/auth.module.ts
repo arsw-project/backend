@@ -1,38 +1,93 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
+import { CreateSessionUseCase } from '@auth/application/use-cases/create-session.case';
+import { DeleteSessionUseCase } from '@auth/application/use-cases/delete-session.case';
+import { GetSessionUseCase } from '@auth/application/use-cases/get-session.case';
+import { LoginEmailUserUseCase } from '@auth/application/use-cases/login-email-user.case';
 import { LoginGoogleUserUseCase } from '@auth/application/use-cases/login-google-user.case';
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
 import { SessionMemoryAdapter } from '@auth/infrastructure/adapters/persistence/session-memory.adapter';
-import { ArcticService } from '@auth/infrastructure/clients/arctic.client';
+import { ArcticClient } from '@auth/infrastructure/clients/arctic.client';
 import { GoogleRestController } from '@auth/infrastructure/http/google-rest.controller';
-import { Module } from '@nestjs/common';
+import { SessionRestController } from '@auth/infrastructure/http/session-rest.controller';
+import { SessionMiddleware } from '@auth/infrastructure/middleware/session.middleware';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { SettingsClient } from '@settings/infrastructure/clients/settings.client';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { UsersModule } from '@users/module/users.module';
 
 @Module({
 	imports: [UsersModule],
 	providers: [
-		ArcticService,
+		ArcticClient,
 		CryptoService,
 		{
 			provide: SessionRepository,
 			useClass: SessionMemoryAdapter,
 		},
 		{
-			provide: LoginGoogleUserUseCase,
+			provide: GetSessionUseCase,
 			useFactory: (
 				cryptoService: CryptoService,
 				sessionRepository: SessionRepository,
+				config: SettingsClient,
+			) => {
+				return new GetSessionUseCase(cryptoService, sessionRepository, config);
+			},
+			inject: [CryptoService, SessionRepository, SettingsClient],
+		},
+		{
+			provide: CreateSessionUseCase,
+			useFactory: (
+				cryptoService: CryptoService,
+				sessionRepository: SessionRepository,
+			) => {
+				return new CreateSessionUseCase(cryptoService, sessionRepository);
+			},
+			inject: [CryptoService, SessionRepository],
+		},
+		{
+			provide: LoginGoogleUserUseCase,
+			useFactory: (
+				cryptoService: CryptoService,
 				userRepository: UserRepository,
+				createSessionUseCase: CreateSessionUseCase,
 			) => {
 				return new LoginGoogleUserUseCase(
 					cryptoService,
-					sessionRepository,
 					userRepository,
+					createSessionUseCase,
 				);
 			},
-			inject: [CryptoService, SessionRepository, UserRepository],
+			inject: [CryptoService, UserRepository, CreateSessionUseCase],
+		},
+		{
+			provide: LoginEmailUserUseCase,
+			useFactory: (
+				cryptoService: CryptoService,
+				userRepository: UserRepository,
+				createSessionUseCase: CreateSessionUseCase,
+			) => {
+				return new LoginEmailUserUseCase(
+					cryptoService,
+					userRepository,
+					createSessionUseCase,
+				);
+			},
+			inject: [CryptoService, UserRepository, CreateSessionUseCase],
+		},
+		{
+			provide: DeleteSessionUseCase,
+			useFactory: (sessionRepository: SessionRepository) => {
+				return new DeleteSessionUseCase(sessionRepository);
+			},
+			inject: [SessionRepository],
 		},
 	],
-	controllers: [GoogleRestController],
+	controllers: [GoogleRestController, SessionRestController],
+	exports: [SessionRepository, GetSessionUseCase],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(SessionMiddleware).forRoutes('auth/me', 'auth/logout');
+	}
+}

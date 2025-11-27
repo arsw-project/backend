@@ -15,6 +15,7 @@ export class UserDrizzleAdapter implements UserRepository {
 			.insert(usersTable)
 			.values({
 				...createUserDto,
+				role: 'user',
 			})
 			.returning();
 

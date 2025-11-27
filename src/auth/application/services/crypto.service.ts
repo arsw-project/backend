@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import argon2 from 'argon2';
 
 @Injectable()
 export class CryptoService {
-	generateSecureRandomString(length: number = 24): string {
+	public generateSecureRandomString(length: number = 24): string {
 		const alphabet = 'abcdefghijkmnpqrstuvwxyz23456789';
 		const alphabetSize = alphabet.length; // 34
 
@@ -29,13 +30,13 @@ export class CryptoService {
 		return result;
 	}
 
-	async hashSecret(secret: string): Promise<Uint8Array> {
+	public async hashSecret(secret: string): Promise<Uint8Array> {
 		const secretBytes = new TextEncoder().encode(secret);
 		const secretHashBuffer = await crypto.subtle.digest('SHA-256', secretBytes);
 		return new Uint8Array(secretHashBuffer);
 	}
 
-	constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+	public constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 		if (a.byteLength !== b.byteLength) {
 			return false;
 		}
@@ -46,5 +47,22 @@ export class CryptoService {
 		}
 
 		return c === 0;
+	}
+
+	public async hashPassword(password: string): Promise<string> {
+		const hash = await argon2.hash(password);
+
+		return hash;
+	}
+
+	public async verifyPassword(
+		hashedPassword: string,
+		password: string,
+	): Promise<boolean> {
+		try {
+			return await argon2.verify(hashedPassword, password);
+		} catch {
+			return false;
+		}
 	}
 }

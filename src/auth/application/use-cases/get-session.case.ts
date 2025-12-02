@@ -7,24 +7,26 @@ import { CryptoService } from '@auth/application/services/crypto.service';
 import { Session } from '@auth/domain/entities/session.entity';
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
 import { error, ok, Result } from '@common/utility/results';
+import { Injectable } from '@nestjs/common';
+import { SettingsClient } from '@settings/infrastructure/clients/settings.client';
 
-const sessionExpiresInSeconds = 60 * 60 * 24;
-
+@Injectable()
 export class GetSessionUseCase {
 	constructor(
 		private readonly cryptoService: CryptoService,
 		private readonly sessionRepository: SessionRepository,
+		private readonly config: SettingsClient,
 	) {}
 
 	async execute(
-		token: string,
+		sessionToken: string,
 	): Promise<
 		Result<
 			Session,
 			MalformedTokenError | SessionNotFoundError | InvalidSecretError
 		>
 	> {
-		const tokenParts = token.split('.');
+		const tokenParts = sessionToken.split('.');
 		if (tokenParts.length !== 2) {
 			return error(new MalformedTokenError());
 		}
@@ -60,9 +62,9 @@ export class GetSessionUseCase {
 
 		if (
 			now.getTime() - session.createdAt.getTime() >=
-			sessionExpiresInSeconds * 1000
+			this.config.sessionExpiresInSeconds * 1000
 		) {
-			await this.sessionRepository.delete(sessionId);
+			await this.sessionRepository.deleteById(sessionId);
 			return null;
 		}
 

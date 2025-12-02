@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
+import { UpdateUserDto } from '@users/application/dto/update-user.dto';
 import { User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
@@ -14,6 +15,7 @@ export class UserMemoryAdapter extends UserRepository {
 			id: (this.users.length + 1).toString(),
 			createdAt: now,
 			updatedAt: now,
+			role: 'user',
 		};
 
 		this.users.push(newUser);
@@ -54,5 +56,30 @@ export class UserMemoryAdapter extends UserRepository {
 
 	findAll(): Promise<User[]> {
 		return Promise.resolve(this.users);
+	}
+
+	update(id: string, data: UpdateUserDto): Promise<User | null> {
+		const index = this.users.findIndex((user) => user.id === id);
+		if (index === -1) {
+			return Promise.resolve(null);
+		}
+
+		const existingUser = this.users[index];
+		const updatedUser: User = {
+			...existingUser,
+			...data,
+			updatedAt: new Date(),
+		};
+
+		this.users[index] = updatedUser;
+		return Promise.resolve(updatedUser);
+	}
+
+	delete(id: string): Promise<void> {
+		const index = this.users.findIndex((user) => user.id === id);
+		if (index !== -1) {
+			this.users.splice(index, 1);
+		}
+		return Promise.resolve();
 	}
 }

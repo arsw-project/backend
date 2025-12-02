@@ -1,5 +1,7 @@
 import type { AuthProvider } from '@users/domain/entities/user.entity';
-import { date, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+
+export const roleEnum = pgEnum('role', ['user', 'admin', 'system']);
 
 export const usersTable = pgTable('users', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -8,6 +10,7 @@ export const usersTable = pgTable('users', {
 	password: text('password').notNull(),
 	authProvider: text('auth_provider').notNull().$type<AuthProvider>(),
 	providerId: text('provider_id'),
-	createdAt: date('created_at', { mode: 'date' }).defaultNow().notNull(),
-	updatedAt: date('updated_at', { mode: 'date' }).defaultNow().notNull(),
+	role: roleEnum('role').default('user').notNull(),
+	createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+	updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 });

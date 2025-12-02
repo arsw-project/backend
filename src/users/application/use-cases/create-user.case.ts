@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { CryptoService } from '@auth/application/services/crypto.service';
 import { error, ok, Result } from '@common/utility/results';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
 import { UserConflictError } from '@users/application/errors/user-conflict.error';
@@ -6,7 +7,10 @@ import { User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 
 export class CreateUserUseCase {
-	constructor(private readonly userRepository: UserRepository) {}
+	constructor(
+		private readonly userRepository: UserRepository,
+		private readonly cryptoService: CryptoService,
+	) {}
 
 	async execute(
 		createUserDto: CreateUserDto,
@@ -39,7 +43,11 @@ export class CreateUserUseCase {
 			return error(conflictError);
 		}
 
-		const user = await this.userRepository.create(dto);
+		const passwordHash = await this.cryptoService.hashPassword(dto.password);
+		const user = await this.userRepository.create({
+			...dto,
+			password: passwordHash,
+		});
 
 		return ok(user);
 	}

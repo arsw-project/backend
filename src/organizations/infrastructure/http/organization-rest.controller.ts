@@ -1,17 +1,39 @@
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
+	ConflictErrorDto,
+	InternalServerErrorDto,
+	NotFoundErrorDto,
+	ValidationErrorResponseDto,
+} from '@common/swagger/api-error.dto';
+import {
 	Body,
 	ConflictException,
 	Controller,
 	Delete,
 	Get,
+	HttpCode,
+	HttpStatus,
 	InternalServerErrorException,
+	NotFoundException,
 	Param,
 	Patch,
 	Post,
+	Query,
 	UsePipes,
 } from '@nestjs/common';
+import {
+	ApiBody,
+	ApiConflictResponse,
+	ApiInternalServerErrorResponse,
+	ApiNotFoundResponse,
+	ApiOperation,
+	ApiParam,
+	ApiQuery,
+	ApiResponse,
+	ApiTags,
+	ApiUnprocessableEntityResponse,
+} from '@nestjs/swagger';
 import {
 	type CreateOrganizationDto,
 	createOrganizationSchema,
@@ -24,7 +46,14 @@ import { GetAllOrganizationsUseCase } from '@organizations/application/use-cases
 import { GetOrganizationByIdUseCase } from '@organizations/application/use-cases/get-organization-by-id.case';
 import { GetOrganizationByNameUseCase } from '@organizations/application/use-cases/get-organization-by-name.case';
 import { UpdateOrganizationUseCase } from '@organizations/application/use-cases/update-organization.case';
+import {
+	CreateOrganizationRequestDto,
+	GetAllOrganizationsResponseDto,
+	GetOrganizationResponseDto,
+	UpdateOrganizationRequestDto,
+} from '../swagger/organization.swagger';
 
+@ApiTags('Organizations')
 @Controller('organizations')
 export class OrganizationRestController {
 	constructor(
@@ -37,7 +66,50 @@ export class OrganizationRestController {
 	) {}
 
 	@Get()
-	async getAllOrganizations() {
+	@ApiOperation({
+		summary: 'Listar organizaciones o buscar por nombre',
+		description:
+			'Retorna todas las organizaciones o busca una específica por nombre si se proporciona el parámetro query',
+	})
+	@ApiQuery({
+		name: 'name',
+		required: false,
+		description: 'Nombre de la organización a buscar',
+		example: 'Acme Corp',
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'Lista de organizaciones o organización encontrada',
+		type: GetAllOrganizationsResponseDto,
+	})
+	@ApiNotFoundResponse({
+		description: 'Organización no encontrada (cuando se busca por nombre)',
+		type: NotFoundErrorDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
+	async getAllOrganizations(@Query('name') name?: string) {
+		// Si se proporciona el parámetro name, buscar por nombre
+		if (name) {
+			const result = await this.getOrganizationByNameUseCase.execute(name);
+
+			if (!result.ok) {
+				throw new InternalServerErrorException();
+			}
+
+			if (!result.value) {
+				throw new NotFoundException({
+					message: 'Organization not found',
+					code: 'ORGANIZATION_NOT_FOUND',
+				});
+			}
+
+			return { organization: result.value };
+		}
+
+		// Si no hay parámetros, devolver todas las organizaciones
 		const result = await this.getAllOrganizationsUseCase.execute();
 
 		if (!result.ok) {
@@ -49,6 +121,29 @@ export class OrganizationRestController {
 
 	@Post()
 	@UsePipes(new ZodValidationPipe(createOrganizationSchema))
+	@HttpCode(HttpStatus.CREATED)
+	@ApiOperation({
+		summary: 'Crear organización',
+		description: 'Crea una nueva organización en el sistema',
+	})
+	@ApiBody({ type: CreateOrganizationRequestDto })
+	@ApiResponse({
+		status: 201,
+		description: 'Organización creada exitosamente',
+		type: GetOrganizationResponseDto,
+	})
+	@ApiConflictResponse({
+		description: 'Ya existe una organización con ese nombre',
+		type: ConflictErrorDto,
+	})
+	@ApiUnprocessableEntityResponse({
+		description: 'Error de validación en los datos de entrada',
+		type: ValidationErrorResponseDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
 	async createOrganization(
 		@Body() createOrganizationDto: CreateOrganizationDto,
 	) {
@@ -79,6 +174,29 @@ export class OrganizationRestController {
 	}
 
 	@Get(':id')
+	@ApiOperation({
+		summary: 'Obtener organización por ID',
+		description:
+			'Retorna una organización específica por su identificador único',
+	})
+	@ApiParam({
+		name: 'id',
+		description: 'ID único de la organización',
+		example: '550e8400-e29b-41d4-a716-446655440000',
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'Organización encontrada',
+		type: GetOrganizationResponseDto,
+	})
+	@ApiNotFoundResponse({
+		description: 'Organización no encontrada',
+		type: NotFoundErrorDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
 	async getById(@Param('id') id: string) {
 		const result = await this.getOrganizationByIdUseCase.execute(id);
 
@@ -87,22 +205,10 @@ export class OrganizationRestController {
 		}
 
 		if (!result.value) {
-			return { organization: null };
-		}
-
-		return { organization: result.value };
-	}
-
-	@Get('by-name/:name')
-	async getByName(@Param('name') name: string) {
-		const result = await this.getOrganizationByNameUseCase.execute(name);
-
-		if (!result.ok) {
-			throw new InternalServerErrorException();
-		}
-
-		if (!result.value) {
-			return { organization: null };
+			throw new NotFoundException({
+				message: 'Organization not found',
+				code: 'ORGANIZATION_NOT_FOUND',
+			});
 		}
 
 		return { organization: result.value };
@@ -110,6 +216,37 @@ export class OrganizationRestController {
 
 	@Patch(':id')
 	@UsePipes(new ZodValidationPipe(updateOrganizationSchema))
+	@ApiOperation({
+		summary: 'Actualizar organización',
+		description: 'Actualiza los datos de una organización existente',
+	})
+	@ApiParam({
+		name: 'id',
+		description: 'ID único de la organización',
+		example: '550e8400-e29b-41d4-a716-446655440000',
+	})
+	@ApiBody({ type: UpdateOrganizationRequestDto })
+	@ApiResponse({
+		status: 200,
+		description: 'Organización actualizada exitosamente',
+		type: GetOrganizationResponseDto,
+	})
+	@ApiNotFoundResponse({
+		description: 'Organización no encontrada',
+		type: NotFoundErrorDto,
+	})
+	@ApiConflictResponse({
+		description: 'Ya existe una organización con ese nombre',
+		type: ConflictErrorDto,
+	})
+	@ApiUnprocessableEntityResponse({
+		description: 'Error de validación en los datos de entrada',
+		type: ValidationErrorResponseDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
 	async updateOrganization(
 		@Param('id') id: string,
 		@Body() updateOrganizationDto: UpdateOrganizationDto,
@@ -132,6 +269,11 @@ export class OrganizationRestController {
 						code: err.code,
 						errors: err.issues,
 					});
+				case 'ORGANIZATION_NOT_FOUND':
+					throw new NotFoundException({
+						message: err.message,
+						code: err.code,
+					});
 			}
 
 			throw new InternalServerErrorException();
@@ -141,13 +283,46 @@ export class OrganizationRestController {
 	}
 
 	@Delete(':id')
+	@HttpCode(HttpStatus.NO_CONTENT)
+	@ApiOperation({
+		summary: 'Eliminar organización',
+		description: 'Elimina una organización del sistema de forma permanente',
+	})
+	@ApiParam({
+		name: 'id',
+		description: 'ID único de la organización',
+		example: '550e8400-e29b-41d4-a716-446655440000',
+	})
+	@ApiResponse({
+		status: 204,
+		description: 'Organización eliminada exitosamente',
+	})
+	@ApiNotFoundResponse({
+		description: 'Organización no encontrada',
+		type: NotFoundErrorDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
 	async deleteOrganization(@Param('id') id: string) {
 		const result = await this.deleteOrganizationUseCase.execute(id);
 
 		if (!result.ok) {
+			const err = result.error;
+			if (!ApplicationError.isApplicationError(err)) {
+				throw new InternalServerErrorException();
+			}
+
+			switch (err.code) {
+				case 'ORGANIZATION_NOT_FOUND':
+					throw new NotFoundException({
+						message: err.message,
+						code: err.code,
+					});
+			}
+
 			throw new InternalServerErrorException();
 		}
-
-		return { deleted: true };
 	}
 }

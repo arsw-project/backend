@@ -7,6 +7,8 @@ export class MalformedTokenError extends ApplicationError {
 }
 
 export class SessionNotFoundError extends ApplicationError {
+	public readonly code = 'SESSION_NOT_FOUND';
+
 	constructor() {
 		super('Session not found');
 	}

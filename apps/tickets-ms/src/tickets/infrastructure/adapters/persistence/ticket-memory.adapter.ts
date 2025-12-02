@@ -116,6 +116,38 @@ export class TicketMemoryAdapter extends TicketRepository {
 		return Promise.resolve(true);
 	}
 
+	deleteByOrganizationId(orgId: string): Promise<number> {
+		const ticketsToDelete = this.tickets.filter(
+			(ticket) => ticket.orgId === orgId,
+		);
+		const count = ticketsToDelete.length;
+
+		for (const ticket of ticketsToDelete) {
+			const index = this.tickets.indexOf(ticket);
+			if (index !== -1) {
+				this.tickets.splice(index, 1);
+			}
+		}
+
+		return Promise.resolve(count);
+	}
+
+	deleteByCreatorId(creatorId: string): Promise<number> {
+		const ticketsToDelete = this.tickets.filter(
+			(ticket) => ticket.createdBy === creatorId,
+		);
+		const count = ticketsToDelete.length;
+
+		for (const ticket of ticketsToDelete) {
+			const index = this.tickets.indexOf(ticket);
+			if (index !== -1) {
+				this.tickets.splice(index, 1);
+			}
+		}
+
+		return Promise.resolve(count);
+	}
+
 	private applyUpdate(
 		id: string,
 		updates: Partial<Ticket>,

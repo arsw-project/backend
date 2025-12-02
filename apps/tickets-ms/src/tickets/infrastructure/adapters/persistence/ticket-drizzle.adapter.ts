@@ -1,5 +1,5 @@
 import { DrizzleConnection } from '@drizzle/drizzle.connection';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateTicketDto } from '@tickets/application/dto/create-ticket.dto';
 import { UpdateTicketDto } from '@tickets/application/dto/update-ticket.dto';
 import {
@@ -13,6 +13,8 @@ import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class TicketDrizzleAdapter implements TicketRepository {
+	private readonly logger = new Logger(TicketDrizzleAdapter.name);
+
 	constructor(private readonly drizzleConnection: DrizzleConnection) {}
 
 	async create(createTicketDto: CreateTicketDto): Promise<Ticket> {
@@ -135,5 +137,35 @@ export class TicketDrizzleAdapter implements TicketRepository {
 			.where(eq(ticketsTable.id, id))
 			.returning({ id: ticketsTable.id });
 		return result.length > 0;
+	}
+
+	async deleteByOrganizationId(orgId: string): Promise<number> {
+		const result = await this.drizzleConnection.database
+			.delete(ticketsTable)
+			.where(eq(ticketsTable.orgId, orgId))
+			.returning({ id: ticketsTable.id, title: ticketsTable.title });
+
+		if (result.length > 0) {
+			this.logger.warn(
+				`Deleted ${result.length} orphan tickets for non-existent organization '${orgId}': ${result.map((t) => `${t.id} (${t.title})`).join(', ')}`,
+			);
+		}
+
+		return result.length;
+	}
+
+	async deleteByCreatorId(creatorId: string): Promise<number> {
+		const result = await this.drizzleConnection.database
+			.delete(ticketsTable)
+			.where(eq(ticketsTable.createdBy, creatorId))
+			.returning({ id: ticketsTable.id, title: ticketsTable.title });
+
+		if (result.length > 0) {
+			this.logger.warn(
+				`Deleted ${result.length} orphan tickets for non-existent user '${creatorId}': ${result.map((t) => `${t.id} (${t.title})`).join(', ')}`,
+			);
+		}
+
+		return result.length;
 	}
 }

@@ -31,6 +31,5 @@
 			"@drizzle/*": ["src/drizzle/*"]
 		}
 	},
-	"exclude": ["apps", "node_modules", "dist"],
-	"references": [{ "path": "./apps/tickets-ms" }]
+	"exclude": ["apps", "node_modules", "dist"]
 }

@@ -44,4 +44,22 @@ export abstract class TicketRepository {
 	): Promise<Ticket | null>;
 
 	abstract delete(id: string): Promise<boolean>;
+
+	/**
+	 * Elimina todos los tickets de una organización.
+	 * Usado para limpieza cuando se detecta que la organización ya no existe.
+	 *
+	 * @param orgId - UUID de la organización
+	 * @returns Número de tickets eliminados
+	 */
+	abstract deleteByOrganizationId(orgId: string): Promise<number>;
+
+	/**
+	 * Elimina todos los tickets creados por un usuario.
+	 * Usado para limpieza cuando se detecta que el usuario ya no existe.
+	 *
+	 * @param creatorId - UUID del usuario creador
+	 * @returns Número de tickets eliminados
+	 */
+	abstract deleteByCreatorId(creatorId: string): Promise<number>;
 }

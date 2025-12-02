@@ -15,6 +15,7 @@ import {
 	Param,
 	Patch,
 	Post,
+	UnprocessableEntityException,
 	UsePipes,
 } from '@nestjs/common';
 import {
@@ -25,6 +26,7 @@ import {
 	type UpdateTicketDto,
 	updateTicketSchema,
 } from '@tickets/application/dto/update-ticket.dto';
+import { ValidationFailedError } from '@tickets/application/errors/validation-failed.error';
 import { CreateTicketUseCase } from '@tickets/application/use-cases/create-ticket.case';
 import { DeleteTicketUseCase } from '@tickets/application/use-cases/delete-ticket.case';
 import { GetAllTicketsByOrgUseCase } from '@tickets/application/use-cases/get-all-tickets-by-org.case';
@@ -75,6 +77,20 @@ export class TicketRestController {
 						code: error.code,
 						errors: error instanceof ValidationError ? error.issues : undefined,
 					});
+				case 'VALIDATION_FAILED':
+					if (error instanceof ValidationFailedError) {
+						throw new UnprocessableEntityException({
+							message: error.message,
+							code: error.code,
+							details: {
+								userValid: error.userValid,
+								organizationValid: error.organizationValid,
+								deletedUserTickets: error.deletedUserTickets,
+								deletedOrgTickets: error.deletedOrgTickets,
+							},
+						});
+					}
+					break;
 			}
 
 			throw new InternalServerErrorException();

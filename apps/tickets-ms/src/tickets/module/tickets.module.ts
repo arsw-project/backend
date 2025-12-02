@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CreateTicketUseCase } from '@tickets/application/use-cases/create-ticket.case';
 import { DeleteTicketUseCase } from '@tickets/application/use-cases/delete-ticket.case';
 import { GetAllTicketsByOrgUseCase } from '@tickets/application/use-cases/get-all-tickets-by-org.case';
@@ -10,11 +12,23 @@ import { UpdateAcceptanceCriteriaUseCase } from '@tickets/application/use-cases/
 import { UpdateTicketUseCase } from '@tickets/application/use-cases/update-ticket.case';
 import { UpdateTicketAssigneeUseCase } from '@tickets/application/use-cases/update-ticket-assignee.case';
 import { UpdateTicketStatusUseCase } from '@tickets/application/use-cases/update-ticket-status.case';
+import { ExternalValidationPort } from '@tickets/domain/ports/external-validation.port';
 import { TicketRepository } from '@tickets/domain/ports/ticket.repository.port';
+import { HttpExternalValidationAdapter } from '@tickets/infrastructure/adapters/http/http-external-validation.adapter';
 import { TicketDrizzleAdapter } from '@tickets/infrastructure/adapters/persistence/ticket-drizzle.adapter';
 import { TicketRestController } from '@tickets/infrastructure/http/ticket-rest.controller';
 
 @Module({
+	imports: [
+		HttpModule.registerAsync({
+			imports: [ConfigModule],
+			useFactory: (configService: ConfigService) => ({
+				baseURL: configService.get<string>('MONOLITH_URL'),
+				timeout: 5000,
+			}),
+			inject: [ConfigService],
+		}),
+	],
 	controllers: [TicketRestController],
 	providers: [
 		{
@@ -22,11 +36,18 @@ import { TicketRestController } from '@tickets/infrastructure/http/ticket-rest.c
 			useClass: TicketDrizzleAdapter,
 		},
 		{
+			provide: ExternalValidationPort,
+			useClass: HttpExternalValidationAdapter,
+		},
+		{
 			provide: CreateTicketUseCase,
-			useFactory: (ticketRepository: TicketRepository) => {
-				return new CreateTicketUseCase(ticketRepository);
+			useFactory: (
+				ticketRepository: TicketRepository,
+				externalValidation: ExternalValidationPort,
+			) => {
+				return new CreateTicketUseCase(ticketRepository, externalValidation);
 			},
-			inject: [TicketRepository],
+			inject: [TicketRepository, ExternalValidationPort],
 		},
 		{
 			provide: GetTicketByIdUseCase,
@@ -101,6 +122,7 @@ import { TicketRestController } from '@tickets/infrastructure/http/ticket-rest.c
 	],
 	exports: [
 		TicketRepository,
+		ExternalValidationPort,
 		CreateTicketUseCase,
 		GetTicketByIdUseCase,
 		GetAllTicketsByOrgUseCase,

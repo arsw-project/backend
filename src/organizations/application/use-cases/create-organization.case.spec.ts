@@ -2,22 +2,23 @@ import { CreateOrganizationDto } from '@organizations/application/dto/create-org
 import { OrganizationConflictError } from '@organizations/application/errors/organization-conflict.error';
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CreateOrganizationUseCase } from './create-organization.case';
 
 describe('CreateOrganizationUseCase', () => {
 	let useCase: CreateOrganizationUseCase;
-	let repository: jest.Mocked<OrganizationRepository>;
+	let repository: OrganizationRepository;
 
 	beforeEach(() => {
 		repository = {
-			findAll: jest.fn(),
-			findById: jest.fn(),
-			findByName: jest.fn(),
-			checkOrganizationConflict: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-		};
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByName: vi.fn(),
+			checkOrganizationConflict: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		} as unknown as OrganizationRepository;
 
 		useCase = new CreateOrganizationUseCase(repository);
 	});
@@ -38,8 +39,8 @@ describe('CreateOrganizationUseCase', () => {
 
 		it('should create organization successfully when name is unique', async () => {
 			// Arrange
-			repository.findByName.mockResolvedValue(null);
-			repository.create.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.create).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute(validDto);
@@ -57,7 +58,7 @@ describe('CreateOrganizationUseCase', () => {
 
 		it('should return conflict error when organization name already exists', async () => {
 			// Arrange
-			repository.findByName.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute(validDto);
@@ -82,7 +83,7 @@ describe('CreateOrganizationUseCase', () => {
 		it('should handle repository errors during name check', async () => {
 			// Arrange
 			const dbError = new Error('Database connection failed');
-			repository.findByName.mockRejectedValue(dbError);
+			vi.mocked(repository.findByName).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute(validDto)).rejects.toThrow(
@@ -95,8 +96,8 @@ describe('CreateOrganizationUseCase', () => {
 		it('should handle repository errors during creation', async () => {
 			// Arrange
 			const dbError = new Error('Failed to create organization');
-			repository.findByName.mockResolvedValue(null);
-			repository.create.mockRejectedValue(dbError);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.create).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute(validDto)).rejects.toThrow(
@@ -112,8 +113,8 @@ describe('CreateOrganizationUseCase', () => {
 				name: '  Test Organization  ',
 				description: 'Test Description',
 			};
-			repository.findByName.mockResolvedValue(null);
-			repository.create.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.create).mockResolvedValue(mockOrganization);
 
 			// Act
 			await useCase.execute(dtoWithSpaces);
@@ -135,8 +136,8 @@ describe('CreateOrganizationUseCase', () => {
 				description: 'Description 2',
 			};
 
-			repository.findByName.mockResolvedValue(null);
-			repository.create
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.create)
 				.mockResolvedValueOnce({
 					...mockOrganization,
 					id: '1',

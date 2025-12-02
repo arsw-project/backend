@@ -1,22 +1,23 @@
 import { OrganizationNotFoundError } from '@organizations/application/errors/organization-not-found.error';
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DeleteOrganizationUseCase } from './delete-organization.case';
 
 describe('DeleteOrganizationUseCase', () => {
 	let useCase: DeleteOrganizationUseCase;
-	let repository: jest.Mocked<OrganizationRepository>;
+	let repository: OrganizationRepository;
 
 	beforeEach(() => {
 		repository = {
-			findAll: jest.fn(),
-			findById: jest.fn(),
-			findByName: jest.fn(),
-			checkOrganizationConflict: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-		};
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByName: vi.fn(),
+			checkOrganizationConflict: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		} as unknown as OrganizationRepository;
 
 		useCase = new DeleteOrganizationUseCase(repository);
 	});
@@ -32,8 +33,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should delete organization successfully', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result = await useCase.execute('123');
@@ -46,7 +47,7 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should return not found error when organization does not exist', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('non-existent-id');
@@ -64,7 +65,7 @@ describe('DeleteOrganizationUseCase', () => {
 		it('should handle repository errors', async () => {
 			// Arrange
 			const dbError = new Error('Database connection failed');
-			repository.findById.mockRejectedValue(dbError);
+			vi.mocked(repository.findById).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('123')).rejects.toThrow(
@@ -76,8 +77,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should handle numeric id as string', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result = await useCase.execute('123');
@@ -92,8 +93,8 @@ describe('DeleteOrganizationUseCase', () => {
 			// Arrange
 			const uuidId = '550e8400-e29b-41d4-a716-446655440000';
 			const orgWithUuid = { ...mockOrganization, id: uuidId };
-			repository.findById.mockResolvedValue(orgWithUuid);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(orgWithUuid);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result = await useCase.execute(uuidId);
@@ -106,7 +107,7 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should return not found error for empty string id', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('');
@@ -123,8 +124,8 @@ describe('DeleteOrganizationUseCase', () => {
 			// Arrange
 			const specialId = 'org-123!@#$%';
 			const orgWithSpecialId = { ...mockOrganization, id: specialId };
-			repository.findById.mockResolvedValue(orgWithSpecialId);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(orgWithSpecialId);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result = await useCase.execute(specialId);
@@ -137,8 +138,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should handle multiple deletions in sequence', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result1 = await useCase.execute('123');
@@ -161,8 +162,8 @@ describe('DeleteOrganizationUseCase', () => {
 			const constraintError = new Error(
 				'Foreign key constraint violation: Organization has related records',
 			);
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockRejectedValue(constraintError);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockRejectedValue(constraintError);
 
 			// Act & Assert
 			await expect(useCase.execute('123')).rejects.toThrow(
@@ -174,8 +175,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should return success result type', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result = await useCase.execute('123');
@@ -187,8 +188,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should call findById and delete, but not other repository methods', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			await useCase.execute('123');
@@ -204,8 +205,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should handle concurrent deletions', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const results = await Promise.all([
@@ -226,8 +227,8 @@ describe('DeleteOrganizationUseCase', () => {
 		it('should handle timeout errors', async () => {
 			// Arrange
 			const timeoutError = new Error('Query execution timeout');
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockRejectedValue(timeoutError);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockRejectedValue(timeoutError);
 
 			// Act & Assert
 			await expect(useCase.execute('123')).rejects.toThrow(
@@ -238,8 +239,8 @@ describe('DeleteOrganizationUseCase', () => {
 
 		it('should be idempotent when called multiple times with same id', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.delete.mockResolvedValue(undefined);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.delete).mockResolvedValue(undefined);
 
 			// Act
 			const result1 = await useCase.execute('123');

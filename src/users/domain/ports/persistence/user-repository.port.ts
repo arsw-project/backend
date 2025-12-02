@@ -1,4 +1,5 @@
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
+import { UpdateUserDto } from '@users/application/dto/update-user.dto';
 import { AuthProvider, User } from '@users/domain/entities/user.entity';
 
 export abstract class UserRepository {
@@ -16,4 +17,11 @@ export abstract class UserRepository {
 	abstract checkUserConflict(userDto: CreateUserDto): Promise<boolean>;
 
 	abstract findAll(): Promise<User[]>;
+
+	abstract update(
+		id: string,
+		updateUserDto: UpdateUserDto,
+	): Promise<User | null>;
+
+	abstract delete(id: string): Promise<void>;
 }

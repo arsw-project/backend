@@ -20,6 +20,7 @@ export default defineConfig({
 			'@drizzle': resolve(__dirname, './src/drizzle'),
 			'@settings': resolve(__dirname, './src/settings'),
 			'@logging': resolve(__dirname, './src/logging'),
+			'@organizations': resolve(__dirname, './src/organizations'),
 		},
 	},
 });

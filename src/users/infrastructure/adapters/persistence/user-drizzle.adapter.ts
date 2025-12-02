@@ -1,6 +1,7 @@
 import { DrizzleConnection } from '@drizzle/infrastructure/drizzle.connection';
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from '@users/application/dto/create-user.dto';
+import { UpdateUserDto } from '@users/application/dto/update-user.dto';
 import { AuthProvider, User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { usersTable } from '@users/infrastructure/entities/user.drizzle-schema';
@@ -95,5 +96,28 @@ export class UserDrizzleAdapter implements UserRepository {
 			.from(usersTable);
 
 		return users;
+	}
+
+	async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
+		const [updatedUser] = await this.drizzleConnection.database
+			.update(usersTable)
+			.set({
+				...updateUserDto,
+				updatedAt: new Date(),
+			})
+			.where(eq(usersTable.id, id))
+			.returning();
+
+		if (!updatedUser) {
+			return null;
+		}
+
+		return updatedUser;
+	}
+
+	async delete(id: string): Promise<void> {
+		await this.drizzleConnection.database
+			.delete(usersTable)
+			.where(eq(usersTable.id, id));
 	}
 }

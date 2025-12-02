@@ -7,8 +7,8 @@ import { LoggingModule } from '@logging/module/logging.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { SettingsModule } from '@settings/module/settings.module';
 import { OrganizationsModule } from '@organizations/module/organizations.module';
+import { SettingsModule } from '@settings/module/settings.module';
 import { UsersModule } from '@users/module/users.module';
 
 @Module({

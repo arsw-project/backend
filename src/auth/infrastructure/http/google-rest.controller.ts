@@ -10,8 +10,16 @@ import {
 	Req,
 	Res,
 } from '@nestjs/common';
+import {
+	ApiBadRequestResponse,
+	ApiExcludeEndpoint,
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+} from '@nestjs/swagger';
 import { decodeIdToken, OAuth2Tokens } from 'arctic';
 import type { Request, Response } from 'express';
+import { GoogleOAuthErrorDto } from '../swagger/google-auth.swagger';
 
 interface GoogleIdTokenClaims {
 	iss: string;
@@ -21,6 +29,7 @@ interface GoogleIdTokenClaims {
 	picture: string;
 }
 
+@ApiTags('Auth')
 @Controller('auth/google')
 export class GoogleRestController {
 	constructor(
@@ -31,6 +40,25 @@ export class GoogleRestController {
 
 	@Get('login')
 	@Redirect()
+	@ApiOperation({
+		summary: 'Iniciar autenticación con Google',
+		description:
+			'Redirige al usuario a la página de autenticación de Google OAuth 2.0. Establece cookies temporales para el flujo PKCE.',
+	})
+	@ApiResponse({
+		status: 302,
+		description: 'Redirección a Google OAuth',
+		headers: {
+			Location: {
+				description: 'URL de autenticación de Google',
+				schema: { type: 'string' },
+			},
+			'Set-Cookie': {
+				description: 'Cookies de estado OAuth y code verifier',
+				schema: { type: 'string' },
+			},
+		},
+	})
 	emailLogin(@Res({ passthrough: true }) response: Response) {
 		const { codeVerifier, state, url } =
 			this.arcticClient.createGoogleAuthURL();
@@ -61,6 +89,31 @@ export class GoogleRestController {
 
 	@Get('login/callback')
 	@Redirect()
+	@ApiOperation({
+		summary: 'Callback de autenticación Google',
+		description:
+			'Endpoint de callback para el flujo OAuth de Google. Valida el código de autorización, crea o recupera el usuario, y establece la cookie de sesión.',
+	})
+	@ApiResponse({
+		status: 302,
+		description:
+			'Redirección exitosa a la aplicación cliente con sesión establecida',
+		headers: {
+			Location: {
+				description: 'URL de redirección configurada en GOOGLE_LOGIN_REDIRECT',
+				schema: { type: 'string' },
+			},
+			'Set-Cookie': {
+				description: 'Cookie de sesión HTTP-only',
+				schema: { type: 'string' },
+			},
+		},
+	})
+	@ApiBadRequestResponse({
+		description:
+			'Parámetros faltantes, estado inválido o error al validar código',
+		type: GoogleOAuthErrorDto,
+	})
 	async emailLoginCallback(
 		@Req() request: Request,
 		@Res({ passthrough: true }) response: Response,
@@ -120,5 +173,6 @@ export class GoogleRestController {
 	}
 
 	@Get('logout')
+	@ApiExcludeEndpoint()
 	emailLogout() {}
 }

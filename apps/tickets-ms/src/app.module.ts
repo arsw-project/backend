@@ -1,9 +1,10 @@
+import { AuthModule } from '@auth/auth.module';
 import { DrizzleModule } from '@drizzle/drizzle.module';
 import { Module } from '@nestjs/common';
 import { TicketsModule } from '@tickets/module/tickets.module';
 
 @Module({
-	imports: [DrizzleModule, TicketsModule],
+	imports: [DrizzleModule, AuthModule, TicketsModule],
 	controllers: [],
 	providers: [],
 })

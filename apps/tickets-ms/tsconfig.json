@@ -7,7 +7,8 @@
 		"paths": {
 			"@tickets/*": ["src/tickets/*"],
 			"@common/*": ["src/common/*"],
-			"@drizzle/*": ["src/drizzle/*"]
+			"@drizzle/*": ["src/drizzle/*"],
+			"@auth/*": ["src/auth/*"]
 		}
 	},
 	"include": ["src/**/*"],

@@ -11,9 +11,9 @@
 		"start:dev": "nest start --watch",
 		"start:debug": "nest start --debug --watch",
 		"start:prod": "node dist/main",
-		"test": "jest",
-		"test:watch": "jest --watch",
-		"test:cov": "jest --coverage",
+		"test": "vitest --run --passWithNoTests",
+		"test:watch": "vitest --watch",
+		"test:cov": "vitest --run --coverage",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
@@ -25,7 +25,9 @@
 		"@nestjs/core": "^11.0.1",
 		"@nestjs/microservices": "^11.1.9",
 		"@nestjs/platform-express": "^11.0.1",
+		"@nestjs/swagger": "^11.2.3",
 		"axios": "^1.13.2",
+		"cookie-parser": "^1.4.7",
 		"dotenv": "^17.2.2",
 		"drizzle-orm": "^0.38.0",
 		"postgres": "^3.4.0",
@@ -37,29 +39,12 @@
 		"@nestjs/cli": "^11.0.0",
 		"@nestjs/schematics": "^11.0.0",
 		"@nestjs/testing": "^11.0.1",
+		"@types/cookie-parser": "^1.4.8",
 		"@types/node": "^22.10.7",
 		"drizzle-kit": "^0.30.0",
-		"jest": "^30.0.0",
-		"ts-jest": "^29.2.5",
+		"vitest": "^3.2.4",
 		"ts-node": "^10.9.2",
 		"tsconfig-paths": "^4.2.0",
 		"typescript": "^5.7.3"
-	},
-	"jest": {
-		"moduleFileExtensions": [
-			"js",
-			"json",
-			"ts"
-		],
-		"rootDir": "src",
-		"testRegex": ".*\\.spec\\.ts$",
-		"transform": {
-			"^.+\\.(t|j)s$": "ts-jest"
-		},
-		"collectCoverageFrom": [
-			"**/*.(t|j)s"
-		],
-		"coverageDirectory": "../coverage",
-		"testEnvironment": "node"
 	}
 }

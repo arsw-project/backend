@@ -30,7 +30,8 @@
 			"@common/*": ["src/common/*"],
 			"@drizzle/*": ["src/drizzle/*"],
 			"@settings/*": ["src/settings/*"],
-			"@logging/*": ["src/logging/*"]
+			"@logging/*": ["src/logging/*"],
+			"@internal/*": ["src/internal/*"]
 		}
 	},
 	"exclude": ["apps", "node_modules", "dist"]

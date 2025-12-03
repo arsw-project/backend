@@ -3,106 +3,89 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ExternalValidationPort } from '@tickets/domain/ports/external-validation.port';
 import { firstValueFrom } from 'rxjs';
 
-interface UserResponse {
-	id: string;
-	name: string;
-	email: string;
+/**
+ * Respuesta de los endpoints internos /internal/users/:id/exists
+ * y /internal/organizations/:id/exists
+ */
+interface ExistsResponse {
+	exists: boolean;
 }
 
-interface UsersListResponse {
-	users: UserResponse[];
-}
-
-interface OrganizationResponse {
-	organization: {
-		id: string;
-		name: string;
-		description: string;
-	};
+/**
+ * Respuesta del endpoint /internal/organizations/:orgId/members/:userId/exists
+ */
+interface MembershipResponse {
+	isMember: boolean;
 }
 
 /**
  * Adaptador HTTP para validación externa contra el monolito.
  *
- * NOTA: La validación de usuarios actualmente usa GET /users y filtra.
- * Esto es ineficiente pero necesario mientras no exista GET /users/:id.
+ * Valida usuarios y organizaciones llamando a los endpoints internos:
+ * - GET /internal/users/:id/exists
+ * - GET /internal/organizations/:id/exists
  *
- * TODO: Optimizar cuando el monolito implemente GET /users/:id
+ * Usa autenticación service-to-service con X-Service-Token header.
  */
 @Injectable()
 export class HttpExternalValidationAdapter extends ExternalValidationPort {
 	private readonly logger = new Logger(HttpExternalValidationAdapter.name);
 	private readonly monolithUrl: string;
+	private readonly serviceToken: string;
 
 	constructor(private readonly httpService: HttpService) {
 		super();
 		this.monolithUrl = process.env.MONOLITH_URL || 'http://localhost:3000';
+		this.serviceToken = process.env.SERVICE_SECRET_KEY || '';
+
+		if (!this.serviceToken) {
+			this.logger.warn(
+				'SERVICE_SECRET_KEY not configured - internal endpoint calls will fail',
+			);
+		}
+	}
+
+	/**
+	 * Headers comunes para llamadas a endpoints internos.
+	 */
+	private getServiceHeaders() {
+		return {
+			'X-Service-Token': this.serviceToken,
+		};
 	}
 
 	/**
 	 * Valida si un usuario existe en el monolito.
-	 *
-	 * IMPLEMENTACIÓN ACTUAL (INEFICIENTE):
-	 * - Obtiene TODOS los usuarios con GET /users
-	 * - Filtra localmente por ID
-	 *
-	 * TODO: Cuando exista GET /users/:id, reemplazar con:
-	 * ```typescript
-	 * async validateUser(userId: string): Promise<boolean> {
-	 *   try {
-	 *     const response = await firstValueFrom(
-	 *       this.httpService.get<{ user: UserResponse }>(
-	 *         `${this.monolithUrl}/users/${userId}`
-	 *       )
-	 *     );
-	 *     return response.status === 200 && response.data?.user != null;
-	 *   } catch (error) {
-	 *     if (error.response?.status === 404) {
-	 *       this.logger.warn(`User ${userId} not found in monolith`);
-	 *       return false;
-	 *     }
-	 *     this.logger.error(`Error validating user ${userId}:`, error.message);
-	 *     throw error;
-	 *   }
-	 * }
-	 * ```
+	 * Usa GET /internal/users/:id/exists con autenticación por token de servicio.
 	 */
 	async validateUser(userId: string): Promise<boolean> {
 		try {
 			this.logger.debug(`Validating user ${userId} against monolith`);
 
 			const response = await firstValueFrom(
-				this.httpService.get<UsersListResponse>(
-					`${this.monolithUrl}/users`,
+				this.httpService.get<ExistsResponse>(
+					`${this.monolithUrl}/internal/users/${userId}/exists`,
+					{ headers: this.getServiceHeaders() },
 				),
 			);
 
-			if (response.status !== 200 || !response.data?.users) {
-				this.logger.warn(`Unexpected response from monolith: ${response.status}`);
-				return false;
-			}
-
-			// Filtrar localmente (INEFICIENTE - TODO: usar GET /users/:id)
-			const userExists = response.data.users.some(
-				(user) => user.id === userId,
-			);
-
-			if (!userExists) {
-				this.logger.warn(`User ${userId} not found in monolith users list`);
-			}
-
-			return userExists;
+			return response.data?.exists === true;
 		} catch (error) {
+			if (error.response?.status === 401) {
+				this.logger.error(
+					'Service token authentication failed - check SERVICE_SECRET_KEY',
+				);
+				throw new Error('Service authentication failed');
+			}
+
 			this.logger.error(`Error validating user ${userId}:`, error.message);
-			// En caso de error de conexión, lanzamos el error
-			// No asumimos que el usuario no existe por un error de red
 			throw new Error(`Failed to validate user: ${error.message}`);
 		}
 	}
 
 	/**
 	 * Valida si una organización existe en el monolito.
-	 * Usa GET /organizations/:id directamente.
+	 * Usa GET /internal/organizations/:id/exists con autenticación por token de servicio.
 	 */
 	async validateOrganization(organizationId: string): Promise<boolean> {
 		try {
@@ -111,21 +94,19 @@ export class HttpExternalValidationAdapter extends ExternalValidationPort {
 			);
 
 			const response = await firstValueFrom(
-				this.httpService.get<OrganizationResponse>(
-					`${this.monolithUrl}/organizations/${organizationId}`,
+				this.httpService.get<ExistsResponse>(
+					`${this.monolithUrl}/internal/organizations/${organizationId}/exists`,
+					{ headers: this.getServiceHeaders() },
 				),
 			);
 
-			return (
-				response.status === 200 && response.data?.organization != null
-			);
+			return response.data?.exists === true;
 		} catch (error) {
-			// Si es 404, la organización no existe
-			if (error.response?.status === 404) {
-				this.logger.warn(
-					`Organization ${organizationId} not found in monolith`,
+			if (error.response?.status === 401) {
+				this.logger.error(
+					'Service token authentication failed - check SERVICE_SECRET_KEY',
 				);
-				return false;
+				throw new Error('Service authentication failed');
 			}
 
 			this.logger.error(
@@ -133,6 +114,43 @@ export class HttpExternalValidationAdapter extends ExternalValidationPort {
 				error.message,
 			);
 			throw new Error(`Failed to validate organization: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Valida si un usuario es miembro de una organización.
+	 * Usa GET /internal/organizations/:orgId/members/:userId/exists.
+	 */
+	async validateMembership(
+		userId: string,
+		organizationId: string,
+	): Promise<boolean> {
+		try {
+			this.logger.debug(
+				`Validating membership for user ${userId} in organization ${organizationId}`,
+			);
+
+			const response = await firstValueFrom(
+				this.httpService.get<MembershipResponse>(
+					`${this.monolithUrl}/internal/organizations/${organizationId}/members/${userId}/exists`,
+					{ headers: this.getServiceHeaders() },
+				),
+			);
+
+			return response.data?.isMember === true;
+		} catch (error) {
+			if (error.response?.status === 401) {
+				this.logger.error(
+					'Service token authentication failed - check SERVICE_SECRET_KEY',
+				);
+				throw new Error('Service authentication failed');
+			}
+
+			this.logger.error(
+				`Error validating membership for user ${userId} in org ${organizationId}:`,
+				error.message,
+			);
+			throw new Error(`Failed to validate membership: ${error.message}`);
 		}
 	}
 

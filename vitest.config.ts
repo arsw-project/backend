@@ -3,7 +3,12 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	test: {
-		exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+		exclude: [
+			'**/node_modules/**',
+			'**/dist/**',
+			'**/.{idea,git,cache,output,temp}/**',
+			'apps/**',
+		],
 		coverage: {
 			provider: 'v8',
 			thresholds: {
@@ -22,6 +27,7 @@ export default defineConfig({
 			'@settings': resolve(__dirname, './src/settings'),
 			'@logging': resolve(__dirname, './src/logging'),
 			'@organizations': resolve(__dirname, './src/organizations'),
+			'@internal': resolve(__dirname, './src/internal'),
 		},
 	},
 });

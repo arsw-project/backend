@@ -1,6 +1,7 @@
 import { error, ok, Result } from '@common/utility/results';
 import { CreateTicketDto } from '@tickets/application/dto/create-ticket.dto';
 import { TicketConflictError } from '@tickets/application/errors/ticket-conflict.error';
+import { UserNotMemberError } from '@tickets/application/errors/user-not-member.error';
 import { ValidationFailedError } from '@tickets/application/errors/validation-failed.error';
 import { Ticket } from '@tickets/domain/entities/ticket.entity';
 import { ExternalValidationPort } from '@tickets/domain/ports/external-validation.port';
@@ -14,7 +15,12 @@ export class CreateTicketUseCase {
 
 	async execute(
 		createTicketDto: CreateTicketDto,
-	): Promise<Result<Ticket, TicketConflictError | ValidationFailedError>> {
+	): Promise<
+		Result<
+			Ticket,
+			TicketConflictError | ValidationFailedError | UserNotMemberError
+		>
+	> {
 		// First, validate that the user and organization exist in the monolith
 		const validationResult =
 			await this.externalValidation.validateUserAndOrganization(
@@ -47,6 +53,40 @@ export class CreateTicketUseCase {
 					deletedOrgTickets,
 				),
 			);
+		}
+
+		// Validate that the creator is a member of the organization
+		const creatorIsMember = await this.externalValidation.validateMembership(
+			createTicketDto.createdBy,
+			createTicketDto.orgId,
+		);
+
+		if (!creatorIsMember) {
+			return error(
+				new UserNotMemberError(
+					createTicketDto.createdBy,
+					createTicketDto.orgId,
+					'createdBy',
+				),
+			);
+		}
+
+		// Validate assignee membership if provided
+		if (createTicketDto.assigneeId) {
+			const assigneeIsMember = await this.externalValidation.validateMembership(
+				createTicketDto.assigneeId,
+				createTicketDto.orgId,
+			);
+
+			if (!assigneeIsMember) {
+				return error(
+					new UserNotMemberError(
+						createTicketDto.assigneeId,
+						createTicketDto.orgId,
+						'assigneeId',
+					),
+				);
+			}
 		}
 
 		// Check for title conflicts within the same organization

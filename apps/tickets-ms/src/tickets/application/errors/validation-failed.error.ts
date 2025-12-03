@@ -12,7 +12,9 @@ export class ValidationFailedError extends ApplicationError {
 		const messages: string[] = [];
 
 		if (!userValid) {
-			messages.push(`User not found (${deletedUserTickets} orphan tickets deleted)`);
+			messages.push(
+				`User not found (${deletedUserTickets} orphan tickets deleted)`,
+			);
 		}
 		if (!organizationValid) {
 			messages.push(

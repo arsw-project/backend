@@ -8,23 +8,7 @@ export abstract class ExternalValidationPort {
 	/**
 	 * Valida si un usuario existe en el monolito.
 	 *
-	 * IMPLEMENTACIÓN ACTUAL: Usa GET /users y filtra por ID (ineficiente).
-	 *
-	 * TODO: Cuando se implemente GET /users/:id en el monolito, cambiar a:
-	 * ```typescript
-	 * // En HttpExternalValidationAdapter:
-	 * async validateUser(userId: string): Promise<boolean> {
-	 *   try {
-	 *     const response = await firstValueFrom(
-	 *       this.httpService.get(`${this.monolithUrl}/users/${userId}`)
-	 *     );
-	 *     return response.status === 200 && response.data?.user != null;
-	 *   } catch (error) {
-	 *     if (error.response?.status === 404) return false;
-	 *     throw error;
-	 *   }
-	 * }
-	 * ```
+	 * Usa GET /internal/users/:id/exists.
 	 *
 	 * @param userId - UUID del usuario a validar
 	 * @returns true si el usuario existe, false si no existe
@@ -35,13 +19,28 @@ export abstract class ExternalValidationPort {
 	/**
 	 * Valida si una organización existe en el monolito.
 	 *
-	 * Usa GET /organizations/:id directamente.
+	 * Usa GET /internal/organizations/:id/exists.
 	 *
 	 * @param organizationId - UUID de la organización a validar
 	 * @returns true si la organización existe, false si no existe
 	 * @throws Error si hay un problema de conexión con el monolito
 	 */
 	abstract validateOrganization(organizationId: string): Promise<boolean>;
+
+	/**
+	 * Valida si un usuario es miembro de una organización.
+	 *
+	 * Usa GET /internal/organizations/:organizationId/members/:userId/exists.
+	 *
+	 * @param userId - UUID del usuario a validar
+	 * @param organizationId - UUID de la organización
+	 * @returns true si el usuario es miembro, false si no lo es
+	 * @throws Error si hay un problema de conexión con el monolito
+	 */
+	abstract validateMembership(
+		userId: string,
+		organizationId: string,
+	): Promise<boolean>;
 
 	/**
 	 * Valida tanto usuario como organización en una sola operación.

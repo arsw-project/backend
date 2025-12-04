@@ -20,7 +20,6 @@ import {
 	Patch,
 	Post,
 	Query,
-	UsePipes,
 } from '@nestjs/common';
 import {
 	ApiBody,
@@ -120,7 +119,6 @@ export class OrganizationRestController {
 	}
 
 	@Post()
-	@UsePipes(new ZodValidationPipe(createOrganizationSchema))
 	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
 		summary: 'Crear organización',
@@ -145,7 +143,8 @@ export class OrganizationRestController {
 		type: InternalServerErrorDto,
 	})
 	async createOrganization(
-		@Body() createOrganizationDto: CreateOrganizationDto,
+		@Body(new ZodValidationPipe(createOrganizationSchema))
+		createOrganizationDto: CreateOrganizationDto,
 	) {
 		const result = await this.createOrganizationUseCase.execute(
 			createOrganizationDto,
@@ -215,7 +214,6 @@ export class OrganizationRestController {
 	}
 
 	@Patch(':id')
-	@UsePipes(new ZodValidationPipe(updateOrganizationSchema))
 	@ApiOperation({
 		summary: 'Actualizar organización',
 		description: 'Actualiza los datos de una organización existente',
@@ -249,7 +247,8 @@ export class OrganizationRestController {
 	})
 	async updateOrganization(
 		@Param('id') id: string,
-		@Body() updateOrganizationDto: UpdateOrganizationDto,
+		@Body(new ZodValidationPipe(updateOrganizationSchema))
+		updateOrganizationDto: UpdateOrganizationDto,
 	) {
 		const result = await this.updateOrganizationUseCase.execute(
 			id,

@@ -22,7 +22,6 @@ import {
 	Param,
 	Patch,
 	Post,
-	UsePipes,
 } from '@nestjs/common';
 import {
 	ApiBody,
@@ -113,7 +112,6 @@ export class MembershipRestController {
 	}
 
 	@Post()
-	@UsePipes(new ZodValidationPipe(addMemberSchema))
 	@HttpCode(HttpStatus.CREATED)
 	@Role('admin')
 	@ApiOperation({
@@ -150,7 +148,7 @@ export class MembershipRestController {
 	})
 	async addMember(
 		@Param('organizationId') organizationId: string,
-		@Body() addMemberDto: AddMemberDto,
+		@Body(new ZodValidationPipe(addMemberSchema)) addMemberDto: AddMemberDto,
 	) {
 		const result = await this.addMemberUseCase.execute(
 			organizationId,
@@ -186,7 +184,6 @@ export class MembershipRestController {
 	}
 
 	@Patch(':membershipId')
-	@UsePipes(new ZodValidationPipe(updateMemberRoleSchema))
 	@Role('admin')
 	@ApiOperation({
 		summary: 'Actualizar rol de un miembro',
@@ -227,7 +224,8 @@ export class MembershipRestController {
 	})
 	async updateMemberRole(
 		@Param('membershipId') membershipId: string,
-		@Body() updateDto: UpdateMemberRoleDto,
+		@Body(new ZodValidationPipe(updateMemberRoleSchema))
+		updateDto: UpdateMemberRoleDto,
 	) {
 		const result = await this.updateMemberRoleUseCase.execute(
 			membershipId,

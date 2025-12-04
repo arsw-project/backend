@@ -19,7 +19,6 @@ import {
 	Param,
 	Patch,
 	Post,
-	UsePipes,
 } from '@nestjs/common';
 import {
 	ApiBody,
@@ -94,7 +93,6 @@ export class UserRestController {
 	}
 
 	@Post()
-	@UsePipes(new ZodValidationPipe(createUserSchema))
 	@Role('admin')
 	@ApiOperation({
 		summary: 'Crear un nuevo usuario',
@@ -115,7 +113,9 @@ export class UserRestController {
 		description: 'Error interno del servidor',
 		type: InternalServerErrorDto,
 	})
-	async createUser(@Body() createUserDto: CreateUserDto) {
+	async createUser(
+		@Body(new ZodValidationPipe(createUserSchema)) createUserDto: CreateUserDto,
+	) {
 		const result = await this.createUserUseCase.execute(createUserDto);
 
 		if (!result.ok) {
@@ -190,7 +190,6 @@ export class UserRestController {
 	}
 
 	@Patch(':id')
-	@UsePipes(new ZodValidationPipe(updateUserSchema))
 	@Role('admin')
 	@ApiOperation({
 		summary: 'Actualizar usuario',
@@ -222,7 +221,7 @@ export class UserRestController {
 	})
 	async updateUser(
 		@Param('id') id: string,
-		@Body() updateUserDto: UpdateUserDto,
+		@Body(new ZodValidationPipe(updateUserSchema)) updateUserDto: UpdateUserDto,
 	) {
 		const result = await this.updateUserUseCase.execute(id, updateUserDto);
 

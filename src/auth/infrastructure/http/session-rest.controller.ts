@@ -21,7 +21,6 @@ import {
 	Res,
 	UnauthorizedException,
 	UseGuards,
-	UsePipes,
 } from '@nestjs/common';
 import {
 	ApiBody,
@@ -71,7 +70,6 @@ export class SessionRestController {
 	}
 
 	@Post('login')
-	@UsePipes(new ZodValidationPipe(loginUserSchema))
 	@ApiOperation({
 		summary: 'Iniciar sesión con email y contraseña',
 		description: 'Autentica al usuario y establece una cookie de sesión',
@@ -97,7 +95,7 @@ export class SessionRestController {
 		type: InternalServerErrorDto,
 	})
 	async login(
-		@Body() body: LoginUserDto,
+		@Body(new ZodValidationPipe(loginUserSchema)) body: LoginUserDto,
 		@Res({ passthrough: true }) response: Response,
 	) {
 		const result = await this.loginEmailUserUseCase.execute(body);

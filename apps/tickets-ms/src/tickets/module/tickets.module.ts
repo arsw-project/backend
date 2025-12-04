@@ -16,6 +16,7 @@ import { ExternalValidationPort } from '@tickets/domain/ports/external-validatio
 import { TicketRepository } from '@tickets/domain/ports/ticket.repository.port';
 import { HttpExternalValidationAdapter } from '@tickets/infrastructure/adapters/http/http-external-validation.adapter';
 import { TicketDrizzleAdapter } from '@tickets/infrastructure/adapters/persistence/ticket-drizzle.adapter';
+import { TicketInternalController } from '@tickets/infrastructure/http/ticket-internal.controller';
 import { TicketRestController } from '@tickets/infrastructure/http/ticket-rest.controller';
 
 @Module({
@@ -29,7 +30,7 @@ import { TicketRestController } from '@tickets/infrastructure/http/ticket-rest.c
 			inject: [ConfigService],
 		}),
 	],
-	controllers: [TicketRestController],
+	controllers: [TicketRestController, TicketInternalController],
 	providers: [
 		{
 			provide: TicketRepository,

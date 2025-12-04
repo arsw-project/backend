@@ -109,13 +109,11 @@ describe('CreateSessionUseCase', () => {
 					email: validUser.email,
 					authProvider: validUser.authProvider,
 					role: validUser.role,
-					memberships: [
-						{
-							id: 'membership-1',
-							organizationId: 'org-1',
-							role: 'member',
-						},
-					],
+					membership: {
+						id: 'membership-1',
+						organizationId: 'org-1',
+						role: 'member',
+					},
 					createdAt: validUser.createdAt,
 					updatedAt: validUser.updatedAt,
 				});
@@ -148,13 +146,11 @@ describe('CreateSessionUseCase', () => {
 						email: validUser.email,
 						authProvider: validUser.authProvider,
 						role: validUser.role,
-						memberships: [
-							{
-								id: 'membership-1',
-								organizationId: 'org-1',
-								role: 'member',
-							},
-						],
+						membership: {
+							id: 'membership-1',
+							organizationId: 'org-1',
+							role: 'member',
+						},
 						createdAt: validUser.createdAt,
 						updatedAt: validUser.updatedAt,
 					},
@@ -373,7 +369,7 @@ describe('CreateSessionUseCase', () => {
 				expect(result.value.user).toHaveProperty('email');
 				expect(result.value.user).toHaveProperty('authProvider');
 				expect(result.value.user).toHaveProperty('role');
-				expect(result.value.user).toHaveProperty('memberships');
+				expect(result.value.user).toHaveProperty('membership');
 				expect(result.value.user).toHaveProperty('createdAt');
 				expect(result.value.user).toHaveProperty('updatedAt');
 			}

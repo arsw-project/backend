@@ -6,7 +6,6 @@ import {
 import { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
 import { ok, SuccessResult } from '@common/utility/results';
 import { Injectable } from '@nestjs/common';
-import { Membership } from '@organizations/domain/entities/membership.entity';
 import { MembershipRepository } from '@organizations/domain/ports/persistence/membership-repository.port';
 import {
 	SessionMembershipDto,
@@ -32,17 +31,19 @@ export class CreateSessionUseCase {
 		const token = `${id}.${secret}`;
 
 		const userMemberships = await this.membershipRepository.findByUser(user.id);
-		const memberships: SessionMembershipDto[] = userMemberships.map(
-			(membership: Membership) => ({
-				id: membership.id,
-				organizationId: membership.organizationId,
-				role: membership.role,
-			}),
-		);
+		// Usuario solo puede tener una organización - tomamos la primera si existe
+		const membership: SessionMembershipDto | null =
+			userMemberships.length > 0
+				? {
+						id: userMemberships[0].id,
+						organizationId: userMemberships[0].organizationId,
+						role: userMemberships[0].role,
+					}
+				: null;
 
 		const sessionUser = sessionUserSchema.safeParse({
 			...user,
-			memberships,
+			membership,
 		});
 
 		if (!sessionUser.success) {

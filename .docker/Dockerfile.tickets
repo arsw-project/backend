@@ -1,0 +1,37 @@
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm
+
+# Copy workspace package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy root config files needed for build
+COPY tsconfig.json nest-cli.json ./
+
+# Copy tickets-ms package.json
+COPY apps/tickets-ms/package.json ./apps/tickets-ms/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Copy tickets-ms source code
+COPY apps/tickets-ms ./apps/tickets-ms
+
+# Build tickets-ms
+WORKDIR /usr/src/app/apps/tickets-ms
+RUN pnpm run build
+
+EXPOSE 3001
+
+# Create entrypoint script to push schema and start
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'echo "Pushing database schema..."' >> /entrypoint.sh && \
+    echo 'pnpm db:push || echo "Schema push failed, continuing..."' >> /entrypoint.sh && \
+    echo 'echo "Starting application..."' >> /entrypoint.sh && \
+    echo 'exec node dist/src/main' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+CMD ["/bin/sh", "/entrypoint.sh"]
+

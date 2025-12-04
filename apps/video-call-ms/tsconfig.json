@@ -4,6 +4,7 @@
 		"composite": true,
 		"outDir": "./dist",
 		"baseUrl": "./",
+		"skipLibCheck": true,
 		"paths": {
 			"@rooms/*": ["src/rooms/*"],
 			"@common/*": ["src/common/*"],

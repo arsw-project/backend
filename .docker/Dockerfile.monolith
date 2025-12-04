@@ -1,0 +1,33 @@
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm
+
+# Copy workspace package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy all app package files
+COPY apps/tickets-ms/package.json ./apps/tickets-ms/
+COPY apps/video-call-ms/package.json ./apps/video-call-ms/
+
+# Install all dependencies
+RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Copy all source code
+COPY . .
+
+# Build monolith
+RUN pnpm run build
+
+EXPOSE 3000
+
+# Create entrypoint script to push schema and start
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'echo "Pushing database schema..."' >> /entrypoint.sh && \
+    echo 'pnpm drizzle:push || echo "Schema push failed, continuing..."' >> /entrypoint.sh && \
+    echo 'echo "Starting application..."' >> /entrypoint.sh && \
+    echo 'exec node dist/src/main' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+CMD ["/bin/sh", "/entrypoint.sh"]

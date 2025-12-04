@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build output
+dist
+**/dist
+
+# Git
+.git
+.gitignore
+
+# Environment files (will be injected via docker-compose)
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & Coverage
+coverage
+**/coverage
+.nyc_output
+
+# Docker folder (except Dockerfiles and nginx)
+.docker/*.yml
+.docker/*.md
+.docker/*.sh
+.docker/*.ps1
+.docker/.env*
+
+# Documentation
+*.md
+!README.md
+
+# Logs
+*.log
+logs
+
+# Misc
+.husky
+commitlint.config.mjs
+biome.json

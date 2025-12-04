@@ -4,6 +4,7 @@
 		"composite": true,
 		"outDir": "./dist",
 		"baseUrl": "./",
+		"skipLibCheck": true,
 		"paths": {
 			"@tickets/*": ["src/tickets/*"],
 			"@common/*": ["src/common/*"],

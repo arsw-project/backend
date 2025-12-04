@@ -1,0 +1,174 @@
+services:
+  # ============================================
+  # DATABASES
+  # ============================================
+  
+  # Main database (Monolith)
+  postgres-main:
+    image: postgres:16-alpine
+    container_name: nexus-postgres-main
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nexus_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-main-data:/var/lib/postgresql/data
+      - ./init-scripts/00-seed-admin.sql:/docker-entrypoint-initdb.d/00-seed-admin.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus-network
+
+  # Tickets database
+  postgres-tickets:
+    image: postgres:16-alpine
+    container_name: nexus-postgres-tickets
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tickets_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-tickets-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus-network
+
+  # Video Call database
+  postgres-video-call:
+    image: postgres:16-alpine
+    container_name: nexus-postgres-video-call
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: video_call_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-video-call-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus-network
+
+  # ============================================
+  # SERVICES
+  # ============================================
+
+  # Monolith (Auth, Users, Organizations, Memberships)
+  monolith:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.monolith
+    container_name: nexus-monolith
+    environment:
+      - DRIZZLE_DATABASE_URL=postgresql://postgres:postgres@postgres-main:5432/nexus_db
+      - HOST=http://localhost:8080
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_LOGIN_REDIRECT=${GOOGLE_LOGIN_REDIRECT:-http://localhost:5173}
+      - SERVICE_SECRET_KEY=${SERVICE_SECRET_KEY:-nexus-secret-key-2024}
+      - LOGGING_CONSOLE_ENABLED=true
+      - LOGGING_FILE_ENABLED=false
+      - LOGGING_EXTERNAL_ENABLED=false
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # Tickets Microservice
+  tickets-ms:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.tickets
+    container_name: nexus-tickets-ms
+    environment:
+      - TICKETS_DATABASE_URL=postgresql://postgres:postgres@postgres-tickets:5432/tickets_db
+      - TICKETS_MS_PORT=3001
+      - MONOLITH_URL=http://monolith:3000
+      - SERVICE_SECRET_KEY=${SERVICE_SECRET_KEY:-nexus-secret-key-2024}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres-tickets:
+        condition: service_healthy
+      monolith:
+        condition: service_started
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # Video Call Microservice
+  video-call-ms:
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile.video-call
+    container_name: nexus-video-call-ms
+    environment:
+      - PORT=3002
+      - DRIZZLE_DATABASE_URL=postgresql://postgres:postgres@postgres-video-call:5432/video_call_db
+      - MONOLITH_URL=http://monolith:3000
+      - TICKETS_MS_URL=http://tickets-ms:3001
+      - SERVICE_SECRET_KEY=${SERVICE_SECRET_KEY:-nexus-secret-key-2024}
+      - ROOM_INACTIVITY_TIMEOUT_MINUTES=30
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres-video-call:
+        condition: service_healthy
+      monolith:
+        condition: service_started
+      tickets-ms:
+        condition: service_started
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # ============================================
+  # API GATEWAY
+  # ============================================
+  
+  api-gateway:
+    image: nginx:alpine
+    container_name: nexus-api-gateway
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - monolith
+      - tickets-ms
+      - video-call-ms
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+# ============================================
+# NETWORKS & VOLUMES
+# ============================================
+
+networks:
+  nexus-network:
+    driver: bridge
+
+volumes:
+  postgres-main-data:
+  postgres-tickets-data:
+  postgres-video-call-data:

@@ -1,0 +1,37 @@
+FROM node:20-alpine
+
+WORKDIR /usr/src/app
+
+RUN npm install -g pnpm
+
+# Copy workspace package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy root config files needed for build
+COPY tsconfig.json nest-cli.json ./
+
+# Copy video-call-ms package.json
+COPY apps/video-call-ms/package.json ./apps/video-call-ms/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Copy video-call-ms source code
+COPY apps/video-call-ms ./apps/video-call-ms
+
+# Build video-call-ms
+WORKDIR /usr/src/app/apps/video-call-ms
+RUN pnpm run build
+
+EXPOSE 3002
+
+# Create entrypoint script to push schema and start
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'echo "Pushing database schema..."' >> /entrypoint.sh && \
+    echo 'pnpm db:push || echo "Schema push failed, continuing..."' >> /entrypoint.sh && \
+    echo 'echo "Starting application..."' >> /entrypoint.sh && \
+    echo 'exec node dist/src/main' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+CMD ["/bin/sh", "/entrypoint.sh"]
+

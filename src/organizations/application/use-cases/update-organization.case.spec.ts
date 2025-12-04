@@ -186,6 +186,26 @@ describe('UpdateOrganizationUseCase', () => {
 			expect(repository.update).not.toHaveBeenCalled();
 		});
 
+		it('should return not found error when update returns null', async () => {
+			// Arrange
+			const updateDto: UpdateOrganizationDto = {
+				description: 'Updated Description',
+			};
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.update).mockResolvedValue(null);
+
+			// Act
+			const result = await useCase.execute('123', updateDto);
+
+			// Assert
+			expect(result.ok).toBe(false);
+			if (!result.ok) {
+				expect(result.error).toBeInstanceOf(OrganizationNotFoundError);
+				expect(result.error.code).toBe('ORGANIZATION_NOT_FOUND');
+			}
+			expect(repository.update).toHaveBeenCalledWith('123', updateDto);
+		});
+
 		it('should handle partial updates (name only)', async () => {
 			// Arrange
 			const updateDto: UpdateOrganizationDto = {

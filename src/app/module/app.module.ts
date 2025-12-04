@@ -3,6 +3,7 @@ import { SessionMiddleware } from '@auth/infrastructure/middleware/session.middl
 import { AuthModule } from '@auth/module/auth.module';
 import { DrizzleModule } from '@drizzle/module/drizzle.module';
 import { HealthModule } from '@health/module/health.module';
+import { InternalModule } from '@internal/module/internal.module';
 import { LoggingModule } from '@logging/module/logging.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -23,6 +24,7 @@ import { UsersModule } from '@users/module/users.module';
 		OrganizationsModule,
 		AuthModule,
 		LoggingModule,
+		InternalModule,
 	],
 	controllers: [],
 	providers: [

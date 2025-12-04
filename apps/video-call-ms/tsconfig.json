@@ -1,0 +1,18 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"composite": true,
+		"outDir": "./dist",
+		"baseUrl": "./",
+		"paths": {
+			"@rooms/*": ["src/rooms/*"],
+			"@common/*": ["src/common/*"],
+			"@auth/*": ["src/auth/*"],
+			"@chat/*": ["src/chat/*"],
+			"@drizzle/*": ["src/drizzle/*"],
+			"@health/*": ["src/health/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,16 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"composite": true,
+		"outDir": "./dist",
+		"baseUrl": "./",
+		"paths": {
+			"@tickets/*": ["src/tickets/*"],
+			"@common/*": ["src/common/*"],
+			"@drizzle/*": ["src/drizzle/*"],
+			"@auth/*": ["src/auth/*"]
+		}
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules", "dist"]
+}

@@ -14,7 +14,7 @@ export const sessionUserSchema = z.object({
 	email: z.email(),
 	authProvider: z.string(),
 	role: z.enum(['user', 'admin', 'system']),
-	memberships: z.array(sessionMembershipSchema),
+	membership: sessionMembershipSchema.nullable(),
 	createdAt: z.date(),
 	updatedAt: z.date(),
 });

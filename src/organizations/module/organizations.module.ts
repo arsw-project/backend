@@ -3,6 +3,7 @@ import { AddMemberUseCase } from '@organizations/application/use-cases/add-membe
 import { CreateOrganizationUseCase } from '@organizations/application/use-cases/create-organization.case';
 import { DeleteOrganizationUseCase } from '@organizations/application/use-cases/delete-organization.case';
 import { GetAllOrganizationsUseCase } from '@organizations/application/use-cases/get-all-organizations.case';
+import { GetMembersUseCase } from '@organizations/application/use-cases/get-members.case';
 import { GetOrganizationByIdUseCase } from '@organizations/application/use-cases/get-organization-by-id.case';
 import { GetOrganizationByNameUseCase } from '@organizations/application/use-cases/get-organization-by-name.case';
 import { GetOrganizationMembersUseCase } from '@organizations/application/use-cases/get-organization-members.case';
@@ -15,6 +16,7 @@ import { OrganizationRepository } from '@organizations/domain/ports/persistence/
 import { MembershipDrizzleAdapter } from '@organizations/infrastructure/adapters/persistence/membership-drizzle.adapter';
 import { OrganizationDrizzleAdapter } from '@organizations/infrastructure/adapters/persistence/organization-drizzle.adapter';
 import { MembershipRestController } from '@organizations/infrastructure/http/membership-rest.controller';
+import { MembersRestController } from '@organizations/infrastructure/http/members-rest.controller';
 import { OrganizationRestController } from '@organizations/infrastructure/http/organization-rest.controller';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { UsersModule } from '@users/module/users.module';
@@ -126,8 +128,27 @@ const MembershipRepositoryProvider = {
 			},
 			inject: [MembershipRepository],
 		},
+		{
+			provide: GetMembersUseCase,
+			useFactory: (
+				userRepository: UserRepository,
+				membershipRepository: MembershipRepository,
+				organizationRepository: OrganizationRepository,
+			) => {
+				return new GetMembersUseCase(
+					userRepository,
+					membershipRepository,
+					organizationRepository,
+				);
+			},
+			inject: [UserRepository, MembershipRepository, OrganizationRepository],
+		},
 	],
-	controllers: [OrganizationRestController, MembershipRestController],
+	controllers: [
+		OrganizationRestController,
+		MembershipRestController,
+		MembersRestController,
+	],
 	exports: [OrganizationRepositoryProvider, MembershipRepositoryProvider],
 })
 export class OrganizationsModule {}

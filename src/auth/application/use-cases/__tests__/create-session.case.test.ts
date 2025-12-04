@@ -1,5 +1,6 @@
 import type { CryptoService } from '@auth/application/services/crypto.service';
 import type { SessionRepository } from '@auth/domain/ports/persistence/session-repository.port';
+import type { MembershipRepository } from '@organizations/domain/ports/persistence/membership-repository.port';
 import type { User } from '@users/domain/entities/user.entity';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CreateSessionUseCase } from '../create-session.case';
@@ -9,6 +10,7 @@ describe('CreateSessionUseCase', () => {
 	let createSessionUseCase: CreateSessionUseCase;
 	let mockCryptoService: CryptoService;
 	let mockSessionRepository: SessionRepository;
+	let mockMembershipRepository: MembershipRepository;
 
 	// Setup fresh instances before each test
 	beforeEach(() => {
@@ -28,10 +30,24 @@ describe('CreateSessionUseCase', () => {
 			deleteByUserEmail: vi.fn(),
 		} as unknown as SessionRepository;
 
+		mockMembershipRepository = {
+			create: vi.fn(),
+			findById: vi.fn(),
+			findByUserAndOrganization: vi.fn(),
+			findByOrganization: vi.fn(),
+			findByUser: vi.fn().mockResolvedValue([]),
+			update: vi.fn(),
+			delete: vi.fn(),
+			deleteByOrganization: vi.fn(),
+			countByOrganization: vi.fn(),
+			countOwnersByOrganization: vi.fn(),
+		} as unknown as MembershipRepository;
+
 		// Instantiate test subject
 		createSessionUseCase = new CreateSessionUseCase(
 			mockCryptoService,
 			mockSessionRepository,
+			mockMembershipRepository,
 		);
 	});
 
@@ -50,6 +66,17 @@ describe('CreateSessionUseCase', () => {
 				updatedAt: new Date('2025-01-01T00:00:00Z'),
 			};
 
+			const mockMemberships = [
+				{
+					id: 'membership-1',
+					userId: 'user-123',
+					organizationId: 'org-1',
+					role: 'member' as const,
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				},
+			];
+
 			const mockId = 'session-id-123';
 			const mockSecret = 'secret-456';
 			const mockSecretHash = new Uint8Array([1, 2, 3, 4]);
@@ -62,6 +89,10 @@ describe('CreateSessionUseCase', () => {
 
 			vi.mocked(mockSessionRepository.create).mockResolvedValue(undefined);
 
+			vi.mocked(mockMembershipRepository.findByUser).mockResolvedValue(
+				mockMemberships,
+			);
+
 			// Act: Execute the method under test
 			const result = await createSessionUseCase.execute(validUser);
 
@@ -73,10 +104,18 @@ describe('CreateSessionUseCase', () => {
 				expect(result.value.secretHash).toBe(mockSecretHash);
 				expect(result.value.token).toBe(`${mockId}.${mockSecret}`);
 				expect(result.value.user).toEqual({
+					id: validUser.id,
 					name: validUser.name,
 					email: validUser.email,
 					authProvider: validUser.authProvider,
 					role: validUser.role,
+					memberships: [
+						{
+							id: 'membership-1',
+							organizationId: 'org-1',
+							role: 'member',
+						},
+					],
 					createdAt: validUser.createdAt,
 					updatedAt: validUser.updatedAt,
 				});
@@ -95,16 +134,27 @@ describe('CreateSessionUseCase', () => {
 			).toHaveBeenNthCalledWith(2, 48);
 			expect(mockCryptoService.hashSecret).toHaveBeenCalledWith(mockSecret);
 			expect(mockCryptoService.hashSecret).toHaveBeenCalledTimes(1);
+			expect(mockMembershipRepository.findByUser).toHaveBeenCalledWith(
+				validUser.id,
+			);
 			expect(mockSessionRepository.create).toHaveBeenCalledTimes(1);
 			expect(mockSessionRepository.create).toHaveBeenCalledWith(
 				expect.objectContaining({
 					id: mockId,
 					secretHash: mockSecretHash,
 					user: {
+						id: validUser.id,
 						name: validUser.name,
 						email: validUser.email,
 						authProvider: validUser.authProvider,
 						role: validUser.role,
+						memberships: [
+							{
+								id: 'membership-1',
+								organizationId: 'org-1',
+								role: 'member',
+							},
+						],
 						createdAt: validUser.createdAt,
 						updatedAt: validUser.updatedAt,
 					},
@@ -313,16 +363,17 @@ describe('CreateSessionUseCase', () => {
 			// Act
 			const result = await createSessionUseCase.execute(validUser);
 
-			// Assert: Verify password and id are NOT in session user
+			// Assert: Verify password and providerId are NOT in session user, but id is included
 			expect(result.ok).toBe(true);
 			if (result.ok) {
 				expect(result.value.user).not.toHaveProperty('password');
-				expect(result.value.user).not.toHaveProperty('id');
 				expect(result.value.user).not.toHaveProperty('providerId');
+				expect(result.value.user).toHaveProperty('id');
 				expect(result.value.user).toHaveProperty('name');
 				expect(result.value.user).toHaveProperty('email');
 				expect(result.value.user).toHaveProperty('authProvider');
 				expect(result.value.user).toHaveProperty('role');
+				expect(result.value.user).toHaveProperty('memberships');
 				expect(result.value.user).toHaveProperty('createdAt');
 				expect(result.value.user).toHaveProperty('updatedAt');
 			}

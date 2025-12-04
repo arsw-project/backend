@@ -1,21 +1,22 @@
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetAllOrganizationsUseCase } from './get-all-organizations.case';
 
 describe('GetAllOrganizationsUseCase', () => {
 	let useCase: GetAllOrganizationsUseCase;
-	let repository: jest.Mocked<OrganizationRepository>;
+	let repository: OrganizationRepository;
 
 	beforeEach(() => {
 		repository = {
-			findAll: jest.fn(),
-			findById: jest.fn(),
-			findByName: jest.fn(),
-			checkOrganizationConflict: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-		};
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByName: vi.fn(),
+			checkOrganizationConflict: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		} as unknown as OrganizationRepository;
 
 		useCase = new GetAllOrganizationsUseCase(repository);
 	});
@@ -47,7 +48,7 @@ describe('GetAllOrganizationsUseCase', () => {
 
 		it('should return all organizations successfully', async () => {
 			// Arrange
-			repository.findAll.mockResolvedValue(mockOrganizations);
+			vi.mocked(repository.findAll).mockResolvedValue(mockOrganizations);
 
 			// Act
 			const result = await useCase.execute();
@@ -64,7 +65,7 @@ describe('GetAllOrganizationsUseCase', () => {
 
 		it('should return empty array when no organizations exist', async () => {
 			// Arrange
-			repository.findAll.mockResolvedValue([]);
+			vi.mocked(repository.findAll).mockResolvedValue([]);
 
 			// Act
 			const result = await useCase.execute();
@@ -81,7 +82,7 @@ describe('GetAllOrganizationsUseCase', () => {
 		it('should handle repository errors', async () => {
 			// Arrange
 			const dbError = new Error('Database connection failed');
-			repository.findAll.mockRejectedValue(dbError);
+			vi.mocked(repository.findAll).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute()).rejects.toThrow(
@@ -95,7 +96,7 @@ describe('GetAllOrganizationsUseCase', () => {
 			const sortedOrganizations = [...mockOrganizations].sort(
 				(a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
 			);
-			repository.findAll.mockResolvedValue(sortedOrganizations);
+			vi.mocked(repository.findAll).mockResolvedValue(sortedOrganizations);
 
 			// Act
 			const result = await useCase.execute();
@@ -112,7 +113,7 @@ describe('GetAllOrganizationsUseCase', () => {
 		it('should return a single organization when only one exists', async () => {
 			// Arrange
 			const singleOrganization = [mockOrganizations[0]];
-			repository.findAll.mockResolvedValue(singleOrganization);
+			vi.mocked(repository.findAll).mockResolvedValue(singleOrganization);
 
 			// Act
 			const result = await useCase.execute();
@@ -137,7 +138,7 @@ describe('GetAllOrganizationsUseCase', () => {
 					updatedAt: new Date(2024, 0, 1 + i),
 				}),
 			);
-			repository.findAll.mockResolvedValue(largeDataset);
+			vi.mocked(repository.findAll).mockResolvedValue(largeDataset);
 
 			// Act
 			const result = await useCase.execute();
@@ -152,7 +153,7 @@ describe('GetAllOrganizationsUseCase', () => {
 
 		it('should return immutable result', async () => {
 			// Arrange
-			repository.findAll.mockResolvedValue(mockOrganizations);
+			vi.mocked(repository.findAll).mockResolvedValue(mockOrganizations);
 
 			// Act
 			const result = await useCase.execute();

@@ -3,22 +3,23 @@ import { OrganizationConflictError } from '@organizations/application/errors/org
 import { OrganizationNotFoundError } from '@organizations/application/errors/organization-not-found.error';
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UpdateOrganizationUseCase } from './update-organization.case';
 
 describe('UpdateOrganizationUseCase', () => {
 	let useCase: UpdateOrganizationUseCase;
-	let repository: jest.Mocked<OrganizationRepository>;
+	let repository: OrganizationRepository;
 
 	beforeEach(() => {
 		repository = {
-			findAll: jest.fn(),
-			findById: jest.fn(),
-			findByName: jest.fn(),
-			checkOrganizationConflict: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-		};
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByName: vi.fn(),
+			checkOrganizationConflict: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		} as unknown as OrganizationRepository;
 
 		useCase = new UpdateOrganizationUseCase(repository);
 	});
@@ -43,7 +44,7 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: 'Updated Organization',
 			};
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('123', updateDto);
@@ -64,9 +65,9 @@ describe('UpdateOrganizationUseCase', () => {
 				name: 'Updated Organization',
 				description: 'Updated Description',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.findByName.mockResolvedValue(null);
-			repository.update.mockResolvedValue(updatedOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.update).mockResolvedValue(updatedOrganization);
 
 			// Act
 			const result = await useCase.execute('123', updateDto);
@@ -92,8 +93,8 @@ describe('UpdateOrganizationUseCase', () => {
 				...mockOrganization,
 				description: updateDto.description ?? mockOrganization.description,
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.update.mockResolvedValue(updated);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.update).mockResolvedValue(updated);
 
 			// Act
 			const result = await useCase.execute('123', updateDto);
@@ -118,15 +119,15 @@ describe('UpdateOrganizationUseCase', () => {
 				id: '456', // Different ID
 				name: 'Existing Organization',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.findByName.mockResolvedValue(existingOrg);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(existingOrg);
 
 			// Act
 			const result = await useCase.execute('123', updateDto);
 
 			// Assert
 			expect(result.ok).toBe(false);
-			if (!result.ok && result.error) {
+			if (!result.ok && result.error instanceof OrganizationConflictError) {
 				expect(result.error).toBeInstanceOf(OrganizationConflictError);
 				expect(result.error.code).toBe('ORGANIZATION_CONFLICT');
 				expect(result.error.issues).toHaveLength(1);
@@ -148,9 +149,9 @@ describe('UpdateOrganizationUseCase', () => {
 				name: 'Test Organization', // Same name
 				description: 'Updated Description',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.findByName.mockResolvedValue(mockOrganization);
-			repository.update.mockResolvedValue({
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.update).mockResolvedValue({
 				...mockOrganization,
 				description: 'Updated Description',
 			});
@@ -170,7 +171,7 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: 'Updated Name',
 			};
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('non-existent-id', updateDto);
@@ -190,9 +191,9 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: 'New Name Only',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.findByName.mockResolvedValue(null);
-			repository.update.mockResolvedValue({
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.update).mockResolvedValue({
 				...mockOrganization,
 				name: 'New Name Only',
 			});
@@ -215,8 +216,8 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				description: 'New Description Only',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.update.mockResolvedValue({
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.update).mockResolvedValue({
 				...mockOrganization,
 				description: 'New Description Only',
 			});
@@ -240,8 +241,8 @@ describe('UpdateOrganizationUseCase', () => {
 				name: 'New Name',
 			};
 			const dbError = new Error('Database connection failed');
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.findByName.mockRejectedValue(dbError);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('123', updateDto)).rejects.toThrow(
@@ -258,8 +259,8 @@ describe('UpdateOrganizationUseCase', () => {
 				description: 'New Description',
 			};
 			const dbError = new Error('Failed to update organization');
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.update.mockRejectedValue(dbError);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.update).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('123', updateDto)).rejects.toThrow(
@@ -272,8 +273,8 @@ describe('UpdateOrganizationUseCase', () => {
 		it('should handle empty update object', async () => {
 			// Arrange
 			const updateDto: UpdateOrganizationDto = {};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.update.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.update).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute('123', updateDto);
@@ -290,9 +291,9 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: '  Updated Name  ',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
-			repository.findByName.mockResolvedValue(null);
-			repository.update.mockResolvedValue({
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.update).mockResolvedValue({
 				...mockOrganization,
 				name: '  Updated Name  ',
 			});
@@ -310,10 +311,10 @@ describe('UpdateOrganizationUseCase', () => {
 			const updateDto: UpdateOrganizationDto = {
 				name: 'Updated Name',
 			};
-			repository.findById.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
 			const now = new Date();
-			repository.findByName.mockResolvedValue(null);
-			repository.update.mockResolvedValue({
+			vi.mocked(repository.findByName).mockResolvedValue(null);
+			vi.mocked(repository.update).mockResolvedValue({
 				...mockOrganization,
 				name: 'Updated Name',
 				updatedAt: now,

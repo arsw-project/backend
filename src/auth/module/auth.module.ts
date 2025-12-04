@@ -11,12 +11,14 @@ import { GoogleRestController } from '@auth/infrastructure/http/google-rest.cont
 import { SessionRestController } from '@auth/infrastructure/http/session-rest.controller';
 import { SessionMiddleware } from '@auth/infrastructure/middleware/session.middleware';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MembershipRepository } from '@organizations/domain/ports/persistence/membership-repository.port';
+import { OrganizationsModule } from '@organizations/module/organizations.module';
 import { SettingsClient } from '@settings/infrastructure/clients/settings.client';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { UsersModule } from '@users/module/users.module';
 
 @Module({
-	imports: [UsersModule],
+	imports: [UsersModule, OrganizationsModule],
 	providers: [
 		ArcticClient,
 		CryptoService,
@@ -40,10 +42,15 @@ import { UsersModule } from '@users/module/users.module';
 			useFactory: (
 				cryptoService: CryptoService,
 				sessionRepository: SessionRepository,
+				membershipRepository: MembershipRepository,
 			) => {
-				return new CreateSessionUseCase(cryptoService, sessionRepository);
+				return new CreateSessionUseCase(
+					cryptoService,
+					sessionRepository,
+					membershipRepository,
+				);
 			},
-			inject: [CryptoService, SessionRepository],
+			inject: [CryptoService, SessionRepository, MembershipRepository],
 		},
 		{
 			provide: LoginGoogleUserUseCase,

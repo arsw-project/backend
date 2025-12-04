@@ -8,6 +8,11 @@ import { AuthGuard } from '@auth/infrastructure/guards/auth.guard';
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
+	InternalServerErrorDto,
+	NotFoundErrorDto,
+	UnauthorizedErrorDto,
+} from '@common/swagger/api-error.dto';
+import {
 	Body,
 	Controller,
 	Get,
@@ -16,11 +21,27 @@ import {
 	Res,
 	UnauthorizedException,
 	UseGuards,
-	UsePipes,
 } from '@nestjs/common';
+import {
+	ApiBody,
+	ApiCookieAuth,
+	ApiInternalServerErrorResponse,
+	ApiNotFoundResponse,
+	ApiOperation,
+	ApiResponse,
+	ApiTags,
+	ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import type { SessionUserDto } from '@users/application/dto/session-user.dto';
 import type { Response } from 'express';
+import {
+	GetProfileResponseDto,
+	LoginRequestDto,
+	LoginResponseDto,
+	LogoutResponseDto,
+} from '../swagger/auth.swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class SessionRestController {
 	constructor(
@@ -30,14 +51,51 @@ export class SessionRestController {
 
 	@Get('me')
 	@UseGuards(AuthGuard)
+	@ApiCookieAuth('session-token')
+	@ApiOperation({
+		summary: 'Obtener perfil del usuario autenticado',
+		description: 'Retorna la información del usuario autenticado actualmente',
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'Perfil del usuario obtenido exitosamente',
+		type: GetProfileResponseDto,
+	})
+	@ApiUnauthorizedResponse({
+		description: 'No autenticado - Token de sesión inválido o expirado',
+		type: UnauthorizedErrorDto,
+	})
 	getProfile(@User() user: SessionUserDto) {
 		return { user };
 	}
 
 	@Post('login')
-	@UsePipes(new ZodValidationPipe(loginUserSchema))
+	@ApiOperation({
+		summary: 'Iniciar sesión con email y contraseña',
+		description: 'Autentica al usuario y establece una cookie de sesión',
+	})
+	@ApiBody({ type: LoginRequestDto })
+	@ApiResponse({
+		status: 201,
+		description: 'Inicio de sesión exitoso. Se establece cookie session-token',
+		type: LoginResponseDto,
+		headers: {
+			'Set-Cookie': {
+				description: 'Cookie de sesión HTTP-only',
+				schema: { type: 'string' },
+			},
+		},
+	})
+	@ApiUnauthorizedResponse({
+		description: 'Credenciales inválidas',
+		type: UnauthorizedErrorDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
 	async login(
-		@Body() body: LoginUserDto,
+		@Body(new ZodValidationPipe(loginUserSchema)) body: LoginUserDto,
 		@Res({ passthrough: true }) response: Response,
 	) {
 		const result = await this.loginEmailUserUseCase.execute(body);
@@ -74,6 +132,28 @@ export class SessionRestController {
 	}
 	@Post('logout')
 	@UseGuards(AuthGuard)
+	@ApiCookieAuth('session-token')
+	@ApiOperation({
+		summary: 'Cerrar sesión',
+		description: 'Invalida la sesión actual y elimina la cookie de sesión',
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'Sesión cerrada exitosamente',
+		type: LogoutResponseDto,
+	})
+	@ApiNotFoundResponse({
+		description: 'Sesión no encontrada',
+		type: NotFoundErrorDto,
+	})
+	@ApiUnauthorizedResponse({
+		description: 'No autenticado',
+		type: UnauthorizedErrorDto,
+	})
+	@ApiInternalServerErrorResponse({
+		description: 'Error interno del servidor',
+		type: InternalServerErrorDto,
+	})
 	async logout(
 		@Session() sessionToken: string,
 		@Res({

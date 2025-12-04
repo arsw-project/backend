@@ -1,21 +1,22 @@
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetOrganizationByNameUseCase } from './get-organization-by-name.case';
 
 describe('GetOrganizationByNameUseCase', () => {
 	let useCase: GetOrganizationByNameUseCase;
-	let repository: jest.Mocked<OrganizationRepository>;
+	let repository: OrganizationRepository;
 
 	beforeEach(() => {
 		repository = {
-			findAll: jest.fn(),
-			findById: jest.fn(),
-			findByName: jest.fn(),
-			checkOrganizationConflict: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-		};
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByName: vi.fn(),
+			checkOrganizationConflict: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		} as unknown as OrganizationRepository;
 
 		useCase = new GetOrganizationByNameUseCase(repository);
 	});
@@ -31,7 +32,7 @@ describe('GetOrganizationByNameUseCase', () => {
 
 		it('should return organization when found by name', async () => {
 			// Arrange
-			repository.findByName.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute('Test Organization');
@@ -47,7 +48,7 @@ describe('GetOrganizationByNameUseCase', () => {
 
 		it('should return null when organization not found by name', async () => {
 			// Arrange
-			repository.findByName.mockResolvedValue(null);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('Non-existent Organization');
@@ -66,7 +67,7 @@ describe('GetOrganizationByNameUseCase', () => {
 		it('should handle repository errors', async () => {
 			// Arrange
 			const dbError = new Error('Database connection failed');
-			repository.findByName.mockRejectedValue(dbError);
+			vi.mocked(repository.findByName).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('Test Organization')).rejects.toThrow(
@@ -80,7 +81,7 @@ describe('GetOrganizationByNameUseCase', () => {
 			// Arrange
 			const specialName = 'Test & Organization #1';
 			const orgWithSpecialName = { ...mockOrganization, name: specialName };
-			repository.findByName.mockResolvedValue(orgWithSpecialName);
+			vi.mocked(repository.findByName).mockResolvedValue(orgWithSpecialName);
 
 			// Act
 			const result = await useCase.execute(specialName);
@@ -96,7 +97,7 @@ describe('GetOrganizationByNameUseCase', () => {
 		it('should handle name with whitespace', async () => {
 			// Arrange
 			const nameWithSpaces = '  Test Organization  ';
-			repository.findByName.mockResolvedValue(null);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute(nameWithSpaces);
@@ -108,7 +109,7 @@ describe('GetOrganizationByNameUseCase', () => {
 
 		it('should handle empty string name', async () => {
 			// Arrange
-			repository.findByName.mockResolvedValue(null);
+			vi.mocked(repository.findByName).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('');
@@ -125,7 +126,7 @@ describe('GetOrganizationByNameUseCase', () => {
 			// Arrange
 			const longName = 'A'.repeat(500);
 			const orgWithLongName = { ...mockOrganization, name: longName };
-			repository.findByName.mockResolvedValue(orgWithLongName);
+			vi.mocked(repository.findByName).mockResolvedValue(orgWithLongName);
 
 			// Act
 			const result = await useCase.execute(longName);
@@ -142,7 +143,7 @@ describe('GetOrganizationByNameUseCase', () => {
 			// Arrange
 			const unicodeName = 'Organización Española 🇪🇸';
 			const orgWithUnicode = { ...mockOrganization, name: unicodeName };
-			repository.findByName.mockResolvedValue(orgWithUnicode);
+			vi.mocked(repository.findByName).mockResolvedValue(orgWithUnicode);
 
 			// Act
 			const result = await useCase.execute(unicodeName);
@@ -157,7 +158,7 @@ describe('GetOrganizationByNameUseCase', () => {
 
 		it('should be case sensitive in search', async () => {
 			// Arrange
-			repository.findByName
+			vi.mocked(repository.findByName)
 				.mockResolvedValueOnce(mockOrganization)
 				.mockResolvedValueOnce(null);
 
@@ -186,7 +187,7 @@ describe('GetOrganizationByNameUseCase', () => {
 
 		it('should return organization with all fields populated', async () => {
 			// Arrange
-			repository.findByName.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findByName).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute('Test Organization');

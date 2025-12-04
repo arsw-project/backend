@@ -1,21 +1,22 @@
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetOrganizationByIdUseCase } from './get-organization-by-id.case';
 
 describe('GetOrganizationByIdUseCase', () => {
 	let useCase: GetOrganizationByIdUseCase;
-	let repository: jest.Mocked<OrganizationRepository>;
+	let repository: OrganizationRepository;
 
 	beforeEach(() => {
 		repository = {
-			findAll: jest.fn(),
-			findById: jest.fn(),
-			findByName: jest.fn(),
-			checkOrganizationConflict: jest.fn(),
-			create: jest.fn(),
-			update: jest.fn(),
-			delete: jest.fn(),
-		};
+			findAll: vi.fn(),
+			findById: vi.fn(),
+			findByName: vi.fn(),
+			checkOrganizationConflict: vi.fn(),
+			create: vi.fn(),
+			update: vi.fn(),
+			delete: vi.fn(),
+		} as unknown as OrganizationRepository;
 
 		useCase = new GetOrganizationByIdUseCase(repository);
 	});
@@ -31,7 +32,7 @@ describe('GetOrganizationByIdUseCase', () => {
 
 		it('should return organization when found by id', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute('123');
@@ -47,7 +48,7 @@ describe('GetOrganizationByIdUseCase', () => {
 
 		it('should return null when organization not found', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('non-existent-id');
@@ -64,7 +65,7 @@ describe('GetOrganizationByIdUseCase', () => {
 		it('should handle repository errors', async () => {
 			// Arrange
 			const dbError = new Error('Database connection failed');
-			repository.findById.mockRejectedValue(dbError);
+			vi.mocked(repository.findById).mockRejectedValue(dbError);
 
 			// Act & Assert
 			await expect(useCase.execute('123')).rejects.toThrow(
@@ -76,7 +77,7 @@ describe('GetOrganizationByIdUseCase', () => {
 
 		it('should handle numeric id as string', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute('123');
@@ -90,7 +91,7 @@ describe('GetOrganizationByIdUseCase', () => {
 			// Arrange
 			const uuidId = '550e8400-e29b-41d4-a716-446655440000';
 			const orgWithUuid = { ...mockOrganization, id: uuidId };
-			repository.findById.mockResolvedValue(orgWithUuid);
+			vi.mocked(repository.findById).mockResolvedValue(orgWithUuid);
 
 			// Act
 			const result = await useCase.execute(uuidId);
@@ -105,7 +106,7 @@ describe('GetOrganizationByIdUseCase', () => {
 
 		it('should handle empty string id', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute('');
@@ -121,7 +122,7 @@ describe('GetOrganizationByIdUseCase', () => {
 		it('should handle special characters in id', async () => {
 			// Arrange
 			const specialId = 'org-123!@#$%';
-			repository.findById.mockResolvedValue(null);
+			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
 			const result = await useCase.execute(specialId);
@@ -133,7 +134,7 @@ describe('GetOrganizationByIdUseCase', () => {
 
 		it('should return organization with all fields populated', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
 
 			// Act
 			const result = await useCase.execute('123');
@@ -151,7 +152,7 @@ describe('GetOrganizationByIdUseCase', () => {
 
 		it('should call repository only once per execution', async () => {
 			// Arrange
-			repository.findById.mockResolvedValue(mockOrganization);
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
 
 			// Act
 			await useCase.execute('123');

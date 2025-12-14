@@ -69,4 +69,11 @@ export class OrganizationMemoryAdapter extends OrganizationRepository {
 		this.organizations.splice(idx, 1);
 		return Promise.resolve();
 	}
+
+	async findByUserId(_userId: string): Promise<Organization[]> {
+		// Memory adapter: returns empty array by default
+		// In real scenarios, this would require a membership repository
+		// For testing, this method should be mocked with appropriate test data
+		return Promise.resolve([]);
+	}
 }

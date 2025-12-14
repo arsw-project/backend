@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateOrganizationDto } from '@organizations/application/dto/create-organization.dto';
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { membershipsTable } from '@organizations/infrastructure/entities/membership.drizzle-schema';
 import { organizationsTable } from '@organizations/infrastructure/entities/organization.drizzle-schema';
 import { eq } from 'drizzle-orm';
 
@@ -92,5 +93,24 @@ export class OrganizationDrizzleAdapter implements OrganizationRepository {
 		await this.drizzleConnection.database
 			.delete(organizationsTable)
 			.where(eq(organizationsTable.id, id));
+	}
+
+	async findByUserId(userId: string): Promise<Organization[]> {
+		const organizations = await this.drizzleConnection.database
+			.select({
+				id: organizationsTable.id,
+				name: organizationsTable.name,
+				description: organizationsTable.description,
+				createdAt: organizationsTable.createdAt,
+				updatedAt: organizationsTable.updatedAt,
+			})
+			.from(organizationsTable)
+			.innerJoin(
+				membershipsTable,
+				eq(membershipsTable.organizationId, organizationsTable.id),
+			)
+			.where(eq(membershipsTable.userId, userId));
+
+		return organizations as unknown as Organization[];
 	}
 }

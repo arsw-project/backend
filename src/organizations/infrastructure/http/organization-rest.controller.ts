@@ -1,9 +1,11 @@
+import { User } from '@auth/infrastructure/decorators/user.decorator';
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
 	ConflictErrorDto,
 	InternalServerErrorDto,
 	NotFoundErrorDto,
+	UnauthorizedErrorDto,
 	ValidationErrorResponseDto,
 } from '@common/swagger/api-error.dto';
 import {
@@ -24,6 +26,7 @@ import {
 import {
 	ApiBody,
 	ApiConflictResponse,
+	ApiCookieAuth,
 	ApiInternalServerErrorResponse,
 	ApiNotFoundResponse,
 	ApiOperation,
@@ -31,6 +34,7 @@ import {
 	ApiQuery,
 	ApiResponse,
 	ApiTags,
+	ApiUnauthorizedResponse,
 	ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import {
@@ -45,6 +49,7 @@ import { GetAllOrganizationsUseCase } from '@organizations/application/use-cases
 import { GetOrganizationByIdUseCase } from '@organizations/application/use-cases/get-organization-by-id.case';
 import { GetOrganizationByNameUseCase } from '@organizations/application/use-cases/get-organization-by-name.case';
 import { UpdateOrganizationUseCase } from '@organizations/application/use-cases/update-organization.case';
+import type { SessionUserDto } from '@users/application/dto/session-user.dto';
 import {
 	CreateOrganizationRequestDto,
 	GetAllOrganizationsResponseDto,
@@ -65,10 +70,11 @@ export class OrganizationRestController {
 	) {}
 
 	@Get()
+	@ApiCookieAuth('session-token')
 	@ApiOperation({
 		summary: 'Listar organizaciones o buscar por nombre',
 		description:
-			'Retorna todas las organizaciones o busca una específica por nombre si se proporciona el parámetro query',
+			'Retorna organizaciones según el rol del usuario. Usuarios con rol "system" ven todas las organizaciones, usuarios con rol "admin" o "user" ven solo las organizaciones a las que pertenecen. Si se proporciona el parámetro "name", busca una organización específica por nombre.',
 	})
 	@ApiQuery({
 		name: 'name',
@@ -85,11 +91,18 @@ export class OrganizationRestController {
 		description: 'Organización no encontrada (cuando se busca por nombre)',
 		type: NotFoundErrorDto,
 	})
+	@ApiUnauthorizedResponse({
+		description: 'Usuario no autenticado',
+		type: UnauthorizedErrorDto,
+	})
 	@ApiInternalServerErrorResponse({
 		description: 'Error interno del servidor',
 		type: InternalServerErrorDto,
 	})
-	async getAllOrganizations(@Query('name') name?: string) {
+	async getAllOrganizations(
+		@User() currentUser: SessionUserDto | null,
+		@Query('name') name?: string,
+	) {
 		// Si se proporciona el parámetro name, buscar por nombre
 		if (name) {
 			const result = await this.getOrganizationByNameUseCase.execute(name);
@@ -108,8 +121,8 @@ export class OrganizationRestController {
 			return { organization: result.value };
 		}
 
-		// Si no hay parámetros, devolver todas las organizaciones
-		const result = await this.getAllOrganizationsUseCase.execute();
+		// Si no hay parámetros, devolver organizaciones según el rol del usuario
+		const result = await this.getAllOrganizationsUseCase.execute(currentUser);
 
 		if (!result.ok) {
 			throw new InternalServerErrorException();
@@ -173,10 +186,11 @@ export class OrganizationRestController {
 	}
 
 	@Get(':id')
+	@ApiCookieAuth('session-token')
 	@ApiOperation({
 		summary: 'Obtener organización por ID',
 		description:
-			'Retorna una organización específica por su identificador único',
+			'Retorna una organización específica por su identificador único. Usuarios con rol "system" pueden ver cualquier organización. Usuarios con rol "admin" o "user" solo pueden ver organizaciones a las que pertenecen.',
 	})
 	@ApiParam({
 		name: 'id',
@@ -189,15 +203,25 @@ export class OrganizationRestController {
 		type: GetOrganizationResponseDto,
 	})
 	@ApiNotFoundResponse({
-		description: 'Organización no encontrada',
+		description: 'Organización no encontrada o usuario no tiene permisos',
 		type: NotFoundErrorDto,
+	})
+	@ApiUnauthorizedResponse({
+		description: 'Usuario no autenticado',
+		type: UnauthorizedErrorDto,
 	})
 	@ApiInternalServerErrorResponse({
 		description: 'Error interno del servidor',
 		type: InternalServerErrorDto,
 	})
-	async getById(@Param('id') id: string) {
-		const result = await this.getOrganizationByIdUseCase.execute(id);
+	async getById(
+		@User() currentUser: SessionUserDto | null,
+		@Param('id') id: string,
+	) {
+		const result = await this.getOrganizationByIdUseCase.execute(
+			id,
+			currentUser,
+		);
 
 		if (!result.ok) {
 			throw new InternalServerErrorException();

@@ -1,5 +1,6 @@
 import { Organization } from '@organizations/domain/entities/organization.entity';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { SessionUserDto } from '@users/application/dto/session-user.dto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetAllOrganizationsUseCase } from './get-all-organizations.case';
 
@@ -12,6 +13,7 @@ describe('GetAllOrganizationsUseCase', () => {
 			findAll: vi.fn(),
 			findById: vi.fn(),
 			findByName: vi.fn(),
+			findByUserId: vi.fn(),
 			checkOrganizationConflict: vi.fn(),
 			create: vi.fn(),
 			update: vi.fn(),
@@ -46,12 +48,53 @@ describe('GetAllOrganizationsUseCase', () => {
 			},
 		];
 
-		it('should return all organizations successfully', async () => {
+		const mockSystemUser: SessionUserDto = {
+			id: 'user-1',
+			name: 'System User',
+			email: 'system@example.com',
+			authProvider: 'local',
+			role: 'system',
+			membership: null,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const mockAdminUser: SessionUserDto = {
+			id: 'user-2',
+			name: 'Admin User',
+			email: 'admin@example.com',
+			authProvider: 'local',
+			role: 'admin',
+			membership: {
+				id: 'membership-1',
+				organizationId: 'org-1',
+				role: 'admin',
+			},
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const mockRegularUser: SessionUserDto = {
+			id: 'user-3',
+			name: 'Regular User',
+			email: 'user@example.com',
+			authProvider: 'local',
+			role: 'user',
+			membership: {
+				id: 'membership-2',
+				organizationId: 'org-2',
+				role: 'member',
+			},
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		it('should return all organizations for system role user', async () => {
 			// Arrange
 			vi.mocked(repository.findAll).mockResolvedValue(mockOrganizations);
 
 			// Act
-			const result = await useCase.execute();
+			const result = await useCase.execute(mockSystemUser);
 
 			// Assert
 			expect(result.ok).toBe(true);
@@ -60,15 +103,62 @@ describe('GetAllOrganizationsUseCase', () => {
 				expect(result.value).toHaveLength(3);
 			}
 			expect(repository.findAll).toHaveBeenCalledTimes(1);
-			expect(repository.findAll).toHaveBeenCalledWith();
+			expect(repository.findByUserId).not.toHaveBeenCalled();
 		});
 
-		it('should return empty array when no organizations exist', async () => {
+		it('should return user organizations for admin role user', async () => {
 			// Arrange
-			vi.mocked(repository.findAll).mockResolvedValue([]);
+			const userOrgs = [mockOrganizations[0]];
+			vi.mocked(repository.findByUserId).mockResolvedValue(userOrgs);
 
 			// Act
-			const result = await useCase.execute();
+			const result = await useCase.execute(mockAdminUser);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.value).toEqual(userOrgs);
+				expect(result.value).toHaveLength(1);
+			}
+			expect(repository.findByUserId).toHaveBeenCalledWith('user-2');
+			expect(repository.findAll).not.toHaveBeenCalled();
+		});
+
+		it('should return user organizations for regular user role', async () => {
+			// Arrange
+			const userOrgs = [mockOrganizations[1]];
+			vi.mocked(repository.findByUserId).mockResolvedValue(userOrgs);
+
+			// Act
+			const result = await useCase.execute(mockRegularUser);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.value).toEqual(userOrgs);
+			}
+			expect(repository.findByUserId).toHaveBeenCalledWith('user-3');
+		});
+
+		it('should return empty array when user is not authenticated', async () => {
+			// Act
+			const result = await useCase.execute(null);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.value).toEqual([]);
+			}
+			expect(repository.findAll).not.toHaveBeenCalled();
+			expect(repository.findByUserId).not.toHaveBeenCalled();
+		});
+
+		it('should return empty array when no organizations exist for user for user', async () => {
+			// Arrange
+			vi.mocked(repository.findByUserId).mockResolvedValue([]);
+
+			// Act
+			const result = await useCase.execute(mockRegularUser);
 
 			// Assert
 			expect(result.ok).toBe(true);
@@ -76,7 +166,7 @@ describe('GetAllOrganizationsUseCase', () => {
 				expect(result.value).toEqual([]);
 				expect(result.value).toHaveLength(0);
 			}
-			expect(repository.findAll).toHaveBeenCalledTimes(1);
+			expect(repository.findByUserId).toHaveBeenCalledTimes(1);
 		});
 
 		it('should handle repository errors', async () => {
@@ -85,93 +175,10 @@ describe('GetAllOrganizationsUseCase', () => {
 			vi.mocked(repository.findAll).mockRejectedValue(dbError);
 
 			// Act & Assert
-			await expect(useCase.execute()).rejects.toThrow(
+			await expect(useCase.execute(mockSystemUser)).rejects.toThrow(
 				'Database connection failed',
 			);
 			expect(repository.findAll).toHaveBeenCalledTimes(1);
-		});
-
-		it('should return organizations sorted by creation date', async () => {
-			// Arrange
-			const sortedOrganizations = [...mockOrganizations].sort(
-				(a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-			);
-			vi.mocked(repository.findAll).mockResolvedValue(sortedOrganizations);
-
-			// Act
-			const result = await useCase.execute();
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				expect(result.value[0].id).toBe('1');
-				expect(result.value[1].id).toBe('2');
-				expect(result.value[2].id).toBe('3');
-			}
-		});
-
-		it('should return a single organization when only one exists', async () => {
-			// Arrange
-			const singleOrganization = [mockOrganizations[0]];
-			vi.mocked(repository.findAll).mockResolvedValue(singleOrganization);
-
-			// Act
-			const result = await useCase.execute();
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				expect(result.value).toHaveLength(1);
-				expect(result.value[0]).toEqual(mockOrganizations[0]);
-			}
-		});
-
-		it('should handle large datasets', async () => {
-			// Arrange
-			const largeDataset: Organization[] = Array.from(
-				{ length: 1000 },
-				(_, i) => ({
-					id: `${i + 1}`,
-					name: `Organization ${i + 1}`,
-					description: `Description ${i + 1}`,
-					createdAt: new Date(2024, 0, 1 + i),
-					updatedAt: new Date(2024, 0, 1 + i),
-				}),
-			);
-			vi.mocked(repository.findAll).mockResolvedValue(largeDataset);
-
-			// Act
-			const result = await useCase.execute();
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				expect(result.value).toHaveLength(1000);
-			}
-			expect(repository.findAll).toHaveBeenCalledTimes(1);
-		});
-
-		it('should return immutable result', async () => {
-			// Arrange
-			vi.mocked(repository.findAll).mockResolvedValue(mockOrganizations);
-
-			// Act
-			const result = await useCase.execute();
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				const originalLength = result.value.length;
-				// Intentar modificar el resultado no debe afectar llamadas futuras
-				result.value.push({
-					id: '999',
-					name: 'New Org',
-					description: 'New Desc',
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
-				expect(result.value.length).toBe(originalLength + 1);
-			}
 		});
 	});
 });

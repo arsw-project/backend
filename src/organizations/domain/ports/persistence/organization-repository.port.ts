@@ -22,4 +22,6 @@ export abstract class OrganizationRepository {
 	abstract delete(id: string): Promise<void>;
 
 	abstract findAll(): Promise<Organization[]>;
+
+	abstract findByUserId(userId: string): Promise<Organization[]>;
 }

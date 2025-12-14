@@ -52,10 +52,16 @@ const MembershipRepositoryProvider = {
 		},
 		{
 			provide: GetOrganizationByIdUseCase,
-			useFactory: (organizationRepository: OrganizationRepository) => {
-				return new GetOrganizationByIdUseCase(organizationRepository);
+			useFactory: (
+				organizationRepository: OrganizationRepository,
+				membershipRepository: MembershipRepository,
+			) => {
+				return new GetOrganizationByIdUseCase(
+					organizationRepository,
+					membershipRepository,
+				);
 			},
-			inject: [OrganizationRepository],
+			inject: [OrganizationRepository, MembershipRepository],
 		},
 		{
 			provide: GetOrganizationByNameUseCase,

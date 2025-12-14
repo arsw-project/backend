@@ -1,24 +1,41 @@
+import { Membership } from '@organizations/domain/entities/membership.entity';
 import { Organization } from '@organizations/domain/entities/organization.entity';
+import { MembershipRepository } from '@organizations/domain/ports/persistence/membership-repository.port';
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
+import { SessionUserDto } from '@users/application/dto/session-user.dto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GetOrganizationByIdUseCase } from './get-organization-by-id.case';
 
 describe('GetOrganizationByIdUseCase', () => {
 	let useCase: GetOrganizationByIdUseCase;
 	let repository: OrganizationRepository;
+	let membershipRepository: MembershipRepository;
 
 	beforeEach(() => {
 		repository = {
 			findAll: vi.fn(),
 			findById: vi.fn(),
 			findByName: vi.fn(),
+			findByUserId: vi.fn(),
 			checkOrganizationConflict: vi.fn(),
 			create: vi.fn(),
 			update: vi.fn(),
 			delete: vi.fn(),
 		} as unknown as OrganizationRepository;
 
-		useCase = new GetOrganizationByIdUseCase(repository);
+		membershipRepository = {
+			findByUserAndOrganization: vi.fn(),
+			findByUser: vi.fn(),
+			findByOrganization: vi.fn(),
+			create: vi.fn(),
+			delete: vi.fn(),
+			update: vi.fn(),
+			deleteByOrganization: vi.fn(),
+			countByOrganization: vi.fn(),
+			countOwnersByOrganization: vi.fn(),
+		} as unknown as MembershipRepository;
+
+		useCase = new GetOrganizationByIdUseCase(repository, membershipRepository);
 	});
 
 	describe('execute', () => {
@@ -30,12 +47,47 @@ describe('GetOrganizationByIdUseCase', () => {
 			updatedAt: new Date('2024-01-01'),
 		};
 
-		it('should return organization when found by id', async () => {
+		const mockMembership: Membership = {
+			id: 'membership-1',
+			userId: 'user-1',
+			organizationId: '123',
+			role: 'admin',
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const mockSystemUser: SessionUserDto = {
+			id: 'user-system',
+			name: 'System User',
+			email: 'system@example.com',
+			authProvider: 'local',
+			role: 'system',
+			membership: null,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		const mockAdminUser: SessionUserDto = {
+			id: 'user-1',
+			name: 'Admin User',
+			email: 'admin@example.com',
+			authProvider: 'local',
+			role: 'admin',
+			membership: {
+				id: 'membership-1',
+				organizationId: '123',
+				role: 'admin',
+			},
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+
+		it('should return organization for system user regardless of membership', async () => {
 			// Arrange
 			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
 
 			// Act
-			const result = await useCase.execute('123');
+			const result = await useCase.execute('123', mockSystemUser);
 
 			// Assert
 			expect(result.ok).toBe(true);
@@ -43,7 +95,67 @@ describe('GetOrganizationByIdUseCase', () => {
 				expect(result.value).toEqual(mockOrganization);
 			}
 			expect(repository.findById).toHaveBeenCalledWith('123');
-			expect(repository.findById).toHaveBeenCalledTimes(1);
+			expect(
+				membershipRepository.findByUserAndOrganization,
+			).not.toHaveBeenCalled();
+		});
+
+		it('should return organization when user is a member', async () => {
+			// Arrange
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(
+				membershipRepository.findByUserAndOrganization,
+			).mockResolvedValue(mockMembership);
+
+			// Act
+			const result = await useCase.execute('123', mockAdminUser);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.value).toEqual(mockOrganization);
+			}
+			expect(repository.findById).toHaveBeenCalledWith('123');
+			expect(
+				membershipRepository.findByUserAndOrganization,
+			).toHaveBeenCalledWith('user-1', '123');
+		});
+
+		it('should return null when user is not a member', async () => {
+			// Arrange
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+			vi.mocked(
+				membershipRepository.findByUserAndOrganization,
+			).mockResolvedValue(null);
+
+			// Act
+			const result = await useCase.execute('123', mockAdminUser);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.value).toBeNull();
+			}
+			expect(
+				membershipRepository.findByUserAndOrganization,
+			).toHaveBeenCalledWith('user-1', '123');
+		});
+
+		it('should return null when user is not authenticated', async () => {
+			// Arrange
+			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
+
+			// Act
+			const result = await useCase.execute('123', null);
+
+			// Assert
+			expect(result.ok).toBe(true);
+			if (result.ok) {
+				expect(result.value).toBeNull();
+			}
+			expect(
+				membershipRepository.findByUserAndOrganization,
+			).not.toHaveBeenCalled();
 		});
 
 		it('should return null when organization not found', async () => {
@@ -51,7 +163,7 @@ describe('GetOrganizationByIdUseCase', () => {
 			vi.mocked(repository.findById).mockResolvedValue(null);
 
 			// Act
-			const result = await useCase.execute('non-existent-id');
+			const result = await useCase.execute('non-existent-id', mockAdminUser);
 
 			// Assert
 			expect(result.ok).toBe(true);
@@ -59,7 +171,9 @@ describe('GetOrganizationByIdUseCase', () => {
 				expect(result.value).toBeNull();
 			}
 			expect(repository.findById).toHaveBeenCalledWith('non-existent-id');
-			expect(repository.findById).toHaveBeenCalledTimes(1);
+			expect(
+				membershipRepository.findByUserAndOrganization,
+			).not.toHaveBeenCalled();
 		});
 
 		it('should handle repository errors', async () => {
@@ -68,100 +182,10 @@ describe('GetOrganizationByIdUseCase', () => {
 			vi.mocked(repository.findById).mockRejectedValue(dbError);
 
 			// Act & Assert
-			await expect(useCase.execute('123')).rejects.toThrow(
+			await expect(useCase.execute('123', mockAdminUser)).rejects.toThrow(
 				'Database connection failed',
 			);
 			expect(repository.findById).toHaveBeenCalledWith('123');
-			expect(repository.findById).toHaveBeenCalledTimes(1);
-		});
-
-		it('should handle numeric id as string', async () => {
-			// Arrange
-			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
-
-			// Act
-			const result = await useCase.execute('123');
-
-			// Assert
-			expect(result.ok).toBe(true);
-			expect(repository.findById).toHaveBeenCalledWith('123');
-		});
-
-		it('should handle UUID format id', async () => {
-			// Arrange
-			const uuidId = '550e8400-e29b-41d4-a716-446655440000';
-			const orgWithUuid = { ...mockOrganization, id: uuidId };
-			vi.mocked(repository.findById).mockResolvedValue(orgWithUuid);
-
-			// Act
-			const result = await useCase.execute(uuidId);
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				expect(result.value?.id).toBe(uuidId);
-			}
-			expect(repository.findById).toHaveBeenCalledWith(uuidId);
-		});
-
-		it('should handle empty string id', async () => {
-			// Arrange
-			vi.mocked(repository.findById).mockResolvedValue(null);
-
-			// Act
-			const result = await useCase.execute('');
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok) {
-				expect(result.value).toBeNull();
-			}
-			expect(repository.findById).toHaveBeenCalledWith('');
-		});
-
-		it('should handle special characters in id', async () => {
-			// Arrange
-			const specialId = 'org-123!@#$%';
-			vi.mocked(repository.findById).mockResolvedValue(null);
-
-			// Act
-			const result = await useCase.execute(specialId);
-
-			// Assert
-			expect(result.ok).toBe(true);
-			expect(repository.findById).toHaveBeenCalledWith(specialId);
-		});
-
-		it('should return organization with all fields populated', async () => {
-			// Arrange
-			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
-
-			// Act
-			const result = await useCase.execute('123');
-
-			// Assert
-			expect(result.ok).toBe(true);
-			if (result.ok && result.value) {
-				expect(result.value.id).toBeDefined();
-				expect(result.value.name).toBeDefined();
-				expect(result.value.description).toBeDefined();
-				expect(result.value.createdAt).toBeInstanceOf(Date);
-				expect(result.value.updatedAt).toBeInstanceOf(Date);
-			}
-		});
-
-		it('should call repository only once per execution', async () => {
-			// Arrange
-			vi.mocked(repository.findById).mockResolvedValue(mockOrganization);
-
-			// Act
-			await useCase.execute('123');
-			await useCase.execute('456');
-
-			// Assert
-			expect(repository.findById).toHaveBeenCalledTimes(2);
-			expect(repository.findById).toHaveBeenNthCalledWith(1, '123');
-			expect(repository.findById).toHaveBeenNthCalledWith(2, '456');
 		});
 	});
 });

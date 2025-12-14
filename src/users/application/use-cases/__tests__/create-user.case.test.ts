@@ -45,6 +45,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'local',
 				providerId: null,
+				role: 'user',
 			};
 
 			const hashedPassword = 'hashed_password_123';
@@ -106,6 +107,7 @@ describe('CreateUserUseCase', () => {
 				password: 'google_password',
 				authProvider: 'google',
 				providerId: 'google-123',
+				role: 'user',
 			};
 
 			const hashedPassword = 'hashed_google_password';
@@ -159,6 +161,7 @@ describe('CreateUserUseCase', () => {
 				password: 'plain_password',
 				authProvider: 'local',
 				providerId: null,
+				role: 'user',
 			};
 
 			const hashedPassword = 'super_secure_hash';
@@ -204,6 +207,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'local',
 				providerId: null,
+				role: 'user',
 			};
 
 			const existingUser: User = {
@@ -249,6 +253,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'google',
 				providerId: 'existing-provider-id',
+				role: 'user',
 			};
 
 			const existingUser: User = {
@@ -296,6 +301,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'google',
 				providerId: 'existing-provider-id',
+				role: 'user',
 			};
 
 			const existingEmailUser: User = {
@@ -373,6 +379,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'google',
 				providerId: null,
+				role: 'user',
 			};
 
 			vi.mocked(mockUserRepository.findByEmail).mockResolvedValue(null);
@@ -410,6 +417,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'local',
 				providerId: null,
+				role: 'user',
 			};
 
 			vi.mocked(mockUserRepository.findByEmail).mockResolvedValue(null);
@@ -445,6 +453,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'local',
 				providerId: null,
+				role: 'user',
 			};
 
 			const originalDto = { ...createUserDto };
@@ -479,6 +488,7 @@ describe('CreateUserUseCase', () => {
 				password: 'password123',
 				authProvider: 'local',
 				providerId: null,
+				role: 'user',
 			};
 
 			vi.mocked(mockUserRepository.findByEmail).mockResolvedValue(null);

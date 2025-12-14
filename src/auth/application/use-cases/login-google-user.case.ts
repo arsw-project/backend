@@ -40,6 +40,7 @@ export class LoginGoogleUserUseCase {
 				password: randomHashedPassword,
 				authProvider: 'google',
 				providerId: googleUserId,
+				role: 'user',
 			});
 		}
 

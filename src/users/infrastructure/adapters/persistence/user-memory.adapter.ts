@@ -15,7 +15,7 @@ export class UserMemoryAdapter extends UserRepository {
 			id: (this.users.length + 1).toString(),
 			createdAt: now,
 			updatedAt: now,
-			role: 'user',
+			role: user.role || 'user',
 		};
 
 		this.users.push(newUser);

@@ -1,5 +1,6 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { InitializeSystemUserService } from '@users/application/services/initialize-system-user.service';
 import { CreateUserUseCase } from '@users/application/use-cases/create-user.case';
 import { DeleteUserUseCase } from '@users/application/use-cases/delete-user.case';
 import { GetAllUsersUseCase } from '@users/application/use-cases/get-all-users.case';
@@ -19,6 +20,7 @@ const UserRepositoryProvider = {
 	providers: [
 		UserRepositoryProvider,
 		CryptoService,
+		InitializeSystemUserService,
 		{
 			provide: GetAllUsersUseCase,
 			useFactory: (userRepository: UserRepository) => {
@@ -71,4 +73,12 @@ const UserRepositoryProvider = {
 	controllers: [UserRestController],
 	exports: [UserRepositoryProvider],
 })
-export class UsersModule {}
+export class UsersModule implements OnModuleInit {
+	constructor(
+		private readonly initializeSystemUserService: InitializeSystemUserService,
+	) {}
+
+	onModuleInit(): void {
+		this.initializeSystemUserService.onModuleInit();
+	}
+}

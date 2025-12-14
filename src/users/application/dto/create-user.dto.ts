@@ -10,6 +10,7 @@ export const createUserSchema = z
 			'Auth provider must be either local or google',
 		),
 		providerId: z.string().nullable(),
+		role: z.enum(['user', 'admin', 'system']).optional(),
 	})
 	.required();
 

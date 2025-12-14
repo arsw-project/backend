@@ -15,8 +15,8 @@ import { MembershipRepository } from '@organizations/domain/ports/persistence/me
 import { OrganizationRepository } from '@organizations/domain/ports/persistence/organization-repository.port';
 import { MembershipDrizzleAdapter } from '@organizations/infrastructure/adapters/persistence/membership-drizzle.adapter';
 import { OrganizationDrizzleAdapter } from '@organizations/infrastructure/adapters/persistence/organization-drizzle.adapter';
-import { MembershipRestController } from '@organizations/infrastructure/http/membership-rest.controller';
 import { MembersRestController } from '@organizations/infrastructure/http/members-rest.controller';
+import { MembershipRestController } from '@organizations/infrastructure/http/membership-rest.controller';
 import { OrganizationRestController } from '@organizations/infrastructure/http/organization-rest.controller';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
 import { UsersModule } from '@users/module/users.module';

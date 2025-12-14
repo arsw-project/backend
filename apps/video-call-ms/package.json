@@ -14,10 +14,10 @@
 		"test": "vitest --run --passWithNoTests",
 		"test:watch": "vitest --watch",
 		"test:cov": "vitest --run --coverage",
-		"db:generate": "drizzle-kit generate --config=src/drizzle/infrastructure/drizzle.config.ts",
-		"db:migrate": "drizzle-kit migrate --config=src/drizzle/infrastructure/drizzle.config.ts",
-		"db:push": "drizzle-kit push --config=src/drizzle/infrastructure/drizzle.config.ts",
-		"db:studio": "drizzle-kit studio --config=src/drizzle/infrastructure/drizzle.config.ts"
+		"drizzle:generate": "drizzle-kit generate --config=src/drizzle/infrastructure/drizzle.config.ts",
+		"drizzle:migrate": "drizzle-kit migrate --config=src/drizzle/infrastructure/drizzle.config.ts",
+		"drizzle:push": "drizzle-kit push --config=src/drizzle/infrastructure/drizzle.config.ts",
+		"drizzle:studio": "drizzle-kit studio --config=src/drizzle/infrastructure/drizzle.config.ts"
 	},
 	"dependencies": {
 		"@nestjs/axios": "^4.0.1",

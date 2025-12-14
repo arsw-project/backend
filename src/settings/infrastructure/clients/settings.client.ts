@@ -14,6 +14,9 @@ import { Injectable } from '@nestjs/common';
  * @property loggingFilePath - The path for the log file.
  * @property loggingExternalEnabled - Whether external logging is enabled.
  * @property loggingExternalUrl - The URL for external logging.
+ * @property systemUserEmail - The email address for the system administrator user.
+ * @property systemUserPassword - The password for the system administrator user.
+ * @property systemUserName - The name for the system administrator user.
  */
 export abstract class SettingsClientOptions {
 	abstract drizzleDatabaseUrl: string;
@@ -27,6 +30,9 @@ export abstract class SettingsClientOptions {
 	abstract loggingFilePath: string;
 	abstract loggingExternalEnabled: boolean;
 	abstract loggingExternalUrl: string;
+	abstract systemUserEmail: string;
+	abstract systemUserPassword: string;
+	abstract systemUserName: string;
 }
 
 @Injectable()
@@ -42,6 +48,9 @@ export class SettingsClient extends SettingsClientOptions {
 	public readonly loggingFilePath: string;
 	public readonly loggingExternalEnabled: boolean;
 	public readonly loggingExternalUrl: string;
+	public readonly systemUserEmail: string;
+	public readonly systemUserPassword: string;
+	public readonly systemUserName: string;
 
 	constructor() {
 		super();
@@ -66,6 +75,18 @@ export class SettingsClient extends SettingsClientOptions {
 			throw new Error("Env variable 'HOST' is not set");
 		}
 
+		if (process.env.SYSTEM_USER_EMAIL === undefined) {
+			throw new Error("Env variable 'SYSTEM_USER_EMAIL' is not set");
+		}
+
+		if (process.env.SYSTEM_USER_PASSWORD === undefined) {
+			throw new Error("Env variable 'SYSTEM_USER_PASSWORD' is not set");
+		}
+
+		if (process.env.SYSTEM_USER_NAME === undefined) {
+			throw new Error("Env variable 'SYSTEM_USER_NAME' is not set");
+		}
+
 		this.drizzleDatabaseUrl = process.env.DRIZZLE_DATABASE_URL;
 		this.googleClientId = process.env.GOOGLE_CLIENT_ID;
 		this.googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -79,5 +100,8 @@ export class SettingsClient extends SettingsClientOptions {
 		this.loggingExternalEnabled =
 			process.env.LOGGING_EXTERNAL_ENABLED === 'true'; // default false
 		this.loggingExternalUrl = process.env.LOGGING_EXTERNAL_URL || '';
+		this.systemUserEmail = process.env.SYSTEM_USER_EMAIL;
+		this.systemUserPassword = process.env.SYSTEM_USER_PASSWORD;
+		this.systemUserName = process.env.SYSTEM_USER_NAME;
 	}
 }

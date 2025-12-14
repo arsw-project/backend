@@ -1,11 +1,8 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { SettingsClient } from '@settings/infrastructure/clients/settings.client';
 import { User } from '@users/domain/entities/user.entity';
 import { UserRepository } from '@users/domain/ports/persistence/user-repository.port';
-
-const SYSTEM_USER_EMAIL = 'root@mail.com';
-const SYSTEM_USER_PASSWORD = 'root';
-const SYSTEM_USER_NAME = 'System';
 
 @Injectable()
 export class InitializeSystemUserService implements OnModuleInit {
@@ -14,6 +11,7 @@ export class InitializeSystemUserService implements OnModuleInit {
 	constructor(
 		private readonly userRepository: UserRepository,
 		private readonly cryptoService: CryptoService,
+		private readonly settingsClient: SettingsClient,
 	) {}
 
 	async onModuleInit(): Promise<void> {
@@ -27,12 +25,13 @@ export class InitializeSystemUserService implements OnModuleInit {
 	}
 
 	private async ensureSystemUserExists(): Promise<void> {
-		const existingUser =
-			await this.userRepository.findByEmail(SYSTEM_USER_EMAIL);
+		const existingUser = await this.userRepository.findByEmail(
+			this.settingsClient.systemUserEmail,
+		);
 
 		if (existingUser) {
 			this.logger.debug(
-				`System user already exists with email: ${SYSTEM_USER_EMAIL}`,
+				`System user already exists with email: ${this.settingsClient.systemUserEmail}`,
 			);
 			return;
 		}
@@ -41,12 +40,13 @@ export class InitializeSystemUserService implements OnModuleInit {
 	}
 
 	private async createSystemUser(): Promise<User> {
-		const passwordHash =
-			await this.cryptoService.hashPassword(SYSTEM_USER_PASSWORD);
+		const passwordHash = await this.cryptoService.hashPassword(
+			this.settingsClient.systemUserPassword,
+		);
 
 		const user = await this.userRepository.create({
-			name: SYSTEM_USER_NAME,
-			email: SYSTEM_USER_EMAIL,
+			name: this.settingsClient.systemUserName,
+			email: this.settingsClient.systemUserEmail,
 			password: passwordHash,
 			authProvider: 'local',
 			providerId: null,
@@ -54,7 +54,7 @@ export class InitializeSystemUserService implements OnModuleInit {
 		});
 
 		this.logger.log(
-			`System user created successfully with email: ${SYSTEM_USER_EMAIL}`,
+			`System user created successfully with email: ${this.settingsClient.systemUserEmail}`,
 		);
 
 		return user;

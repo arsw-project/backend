@@ -225,6 +225,7 @@ describe('LoginGoogleUserUseCase', () => {
 				password: mockHashedPassword,
 				authProvider: 'google',
 				providerId: 'google-789012',
+				role: 'user',
 			});
 			expect(mockUserRepository.create).toHaveBeenCalledTimes(1);
 
@@ -811,6 +812,7 @@ describe('LoginGoogleUserUseCase', () => {
 				password: 'hashed-password',
 				authProvider: 'google',
 				providerId: 'google-auth-test',
+				role: 'user',
 			});
 		});
 
@@ -1249,6 +1251,7 @@ describe('LoginGoogleUserUseCase', () => {
 				password: 'hashed-password',
 				authProvider: 'google',
 				providerId: 'google-exact-match',
+				role: 'user',
 			});
 		});
 	});

@@ -97,6 +97,23 @@ export class SignalingGateway
 		this.logger.log(`Client connected: ${client.id}`);
 	}
 
+	/**
+	 * Extract session token from Socket.IO handshake cookies
+	 */
+	private extractSessionToken(client: Socket): string | null {
+		const cookies = client.handshake.headers.cookie;
+		if (!cookies) return null;
+
+		const cookieArray = cookies.split(';').map((c) => c.trim());
+		const sessionCookie = cookieArray.find((c) =>
+			c.startsWith('session-token='),
+		);
+
+		if (!sessionCookie) return null;
+
+		return sessionCookie.split('=')[1];
+	}
+
 	async handleDisconnect(client: Socket) {
 		this.logger.log(`Client disconnected: ${client.id}`);
 
@@ -121,7 +138,7 @@ export class SignalingGateway
 		@MessageBody() payload: unknown,
 		@ConnectedSocket() client: Socket,
 	) {
-		// Validate payload with Zod
+		// Validate payload with Zod (ticketId only now, sessionToken is optional)
 		const validation = validateWsPayload(payload, joinRoomSchema);
 		if (!validation.success) {
 			client.emit('error', {
@@ -132,7 +149,22 @@ export class SignalingGateway
 			return;
 		}
 
-		const { ticketId, sessionToken } = validation.data;
+		const { ticketId } = validation.data;
+
+		// Extract session token from cookie or payload
+		const sessionToken =
+			validation.data.sessionToken || this.extractSessionToken(client);
+
+		if (!sessionToken) {
+			client.emit('error', {
+				message: 'No session token provided',
+				code: 'UNAUTHORIZED',
+			});
+			this.logger.warn(
+				`Client ${client.id} attempted to join room without session token`,
+			);
+			return;
+		}
 
 		// 1. Validate session
 		const sessionResult =
@@ -142,6 +174,9 @@ export class SignalingGateway
 				message: 'Invalid session',
 				code: 'UNAUTHORIZED',
 			});
+			this.logger.warn(
+				`Client ${client.id} failed session validation: ${sessionResult.error.message}`,
+			);
 			return;
 		}
 		const user = sessionResult.value;
@@ -156,8 +191,15 @@ export class SignalingGateway
 				message: "You are not a member of this ticket's organization",
 				code: 'FORBIDDEN',
 			});
+			this.logger.warn(
+				`User ${user.name} (${user.id}) not authorized for ticket ${ticketId}`,
+			);
 			return;
 		}
+
+		this.logger.log(
+			`User ${user.name} (${user.id}) validated for ticket ${ticketId}`,
+		);
 
 		// 3. Join the room
 		const joinResult = await this.joinRoomUseCase.execute(
@@ -165,6 +207,10 @@ export class SignalingGateway
 			membershipResult.value.orgId,
 			client.id,
 			user,
+		);
+
+		this.logger.log(
+			`User ${user.name} joined room ${ticketId}, chat history: ${joinResult.value.chatHistory.length} messages`,
 		);
 
 		// 4. Join Socket.io room
@@ -175,6 +221,11 @@ export class SignalingGateway
 			ticketId,
 			client.id,
 		);
+
+		this.logger.log(
+			`Sending room-joined to ${client.id}, other participants: ${otherParticipants.length}`,
+		);
+
 		client.emit('room-joined', {
 			ticketId,
 			user,
@@ -188,12 +239,15 @@ export class SignalingGateway
 		});
 
 		// 6. Notify others about new user
+		this.logger.log(`Notifying room ${ticketId} about new user ${user.name}`);
 		client.to(ticketId).emit('user-joined', {
 			socketId: client.id,
 			user,
 		});
 
-		this.logger.log(`User ${user.name} joined room ${ticketId}`);
+		this.logger.log(
+			`User ${user.name} successfully joined room ${ticketId} with ${otherParticipants.length} other participants`,
+		);
 	}
 
 	@SubscribeMessage('leave-room')
@@ -301,8 +355,14 @@ export class SignalingGateway
 		@MessageBody() payload: unknown,
 		@ConnectedSocket() client: Socket,
 	) {
+		this.logger.log(`Received chat-message from ${client.id}`);
+
 		const validation = validateWsPayload(payload, sendChatMessageSchema);
 		if (!validation.success) {
+			this.logger.warn(
+				`Invalid chat message payload from ${client.id}:`,
+				validation.errors,
+			);
 			client.emit('error', {
 				message: 'Invalid payload',
 				code: 'VALIDATION_ERROR',
@@ -313,6 +373,7 @@ export class SignalingGateway
 
 		const room = this.getRoomUseCase.bySocketId(client.id);
 		if (!room) {
+			this.logger.warn(`Client ${client.id} not in a room`);
 			client.emit('error', { message: 'Not in a room', code: 'NOT_IN_ROOM' });
 			return;
 		}
@@ -321,7 +382,16 @@ export class SignalingGateway
 			room.ticketId,
 			client.id,
 		);
-		if (!participant) return;
+		if (!participant) {
+			this.logger.warn(
+				`Participant not found for socket ${client.id} in room ${room.ticketId}`,
+			);
+			return;
+		}
+
+		this.logger.log(
+			`Saving chat message from ${participant.user.name} in room ${room.ticketId}`,
+		);
 
 		// Save message to database
 		const messageResult = await this.addChatMessageUseCase.execute({
@@ -333,10 +403,19 @@ export class SignalingGateway
 		});
 
 		if (messageResult.ok) {
+			this.logger.log(`Broadcasting chat message to room ${room.ticketId}`);
 			// Broadcast to all in room (including sender)
 			this.server
 				.to(room.ticketId)
 				.emit('chat-message', chatMessageToJson(messageResult.value));
+		} else {
+			this.logger.error(
+				`Failed to save chat message: ${messageResult.error.message}`,
+			);
+			client.emit('error', {
+				message: 'Failed to save message',
+				code: 'INTERNAL_ERROR',
+			});
 		}
 	}
 

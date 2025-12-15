@@ -9,8 +9,21 @@ async function bootstrap() {
 	app.use(cookieParser());
 	app.useLogger(app.get(LoggerPort));
 	app.enableCors({
-		origin: process.env.CORS_ORIGIN?.split(',') || '*',
+		origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'],
 		credentials: true,
+		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+		allowedHeaders: [
+			'DNT',
+			'User-Agent',
+			'X-Requested-With',
+			'If-Modified-Since',
+			'Cache-Control',
+			'Content-Type',
+			'Range',
+			'Authorization',
+			'Cookie',
+		],
+		exposedHeaders: ['Set-Cookie'],
 	});
 
 	// Swagger Configuration

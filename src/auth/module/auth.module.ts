@@ -95,6 +95,8 @@ import { UsersModule } from '@users/module/users.module';
 })
 export class AuthModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(SessionMiddleware).forRoutes('auth/me', 'auth/logout');
+		consumer
+			.apply(SessionMiddleware)
+			.forRoutes('auth/me', 'auth/logout', 'users', 'organizations', 'members');
 	}
 }

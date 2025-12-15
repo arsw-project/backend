@@ -1,4 +1,5 @@
 import { Role } from '@auth/infrastructure/decorators/role.decorator';
+import { RoleGuard } from '@auth/infrastructure/guards/role.guard';
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
@@ -19,6 +20,7 @@ import {
 	Param,
 	Patch,
 	Post,
+	UseGuards,
 } from '@nestjs/common';
 import {
 	ApiBody,
@@ -57,6 +59,7 @@ import {
 @ApiTags('Users')
 @ApiCookieAuth('session-token')
 @Controller('users')
+@UseGuards(RoleGuard)
 export class UserRestController {
 	constructor(
 		private readonly getAllUsersUseCase: GetAllUsersUseCase,

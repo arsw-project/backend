@@ -1,6 +1,7 @@
 import { RoleGuard } from '@auth/infrastructure/guards/role.guard';
 import { SessionMiddleware } from '@auth/infrastructure/middleware/session.middleware';
 import { AuthModule } from '@auth/module/auth.module';
+import { ProxyModule } from '@common/proxy/proxy.module';
 import { DrizzleModule } from '@drizzle/module/drizzle.module';
 import { HealthModule } from '@health/module/health.module';
 import { InternalModule } from '@internal/module/internal.module';
@@ -25,6 +26,7 @@ import { UsersModule } from '@users/module/users.module';
 		AuthModule,
 		LoggingModule,
 		InternalModule,
+		ProxyModule,
 	],
 	controllers: [],
 	providers: [

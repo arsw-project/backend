@@ -47,6 +47,7 @@ export class SessionMiddleware implements NestMiddleware {
 					{
 						headers: {
 							'X-Service-Token': this.serviceToken,
+							Authorization: `Bearer ${sessionToken}`,
 						},
 					},
 				),

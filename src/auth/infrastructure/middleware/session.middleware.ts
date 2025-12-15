@@ -11,8 +11,16 @@ export interface RequestWithUser extends Request {
 export class SessionMiddleware implements NestMiddleware {
 	constructor(private readonly getSessionUseCase: GetSessionUseCase) {}
 
+	private extractBearerToken(authHeader?: string): string | null {
+		if (!authHeader) return null;
+		const matches = authHeader.match(/^Bearer (.+)$/);
+		return matches ? matches[1] : null;
+	}
+
 	async use(req: RequestWithUser, _res: Response, next: NextFunction) {
-		const sessionId = req.cookies['session-token'];
+		const sessionId =
+			req.cookies['session-token'] ||
+			this.extractBearerToken(req.headers.authorization);
 
 		if (!sessionId) {
 			req.user = null;
@@ -20,6 +28,8 @@ export class SessionMiddleware implements NestMiddleware {
 		}
 
 		const session = await this.getSessionUseCase.execute(sessionId);
+
+		console.log(`Session validation result for token ${sessionId}:`, session);
 
 		if (!session.ok) {
 			req.user = null;

@@ -8,8 +8,22 @@ async function bootstrap() {
 
 	// Enable CORS for WebSocket connections
 	app.enableCors({
-		origin: true,
+		origin: process.env.CORS_ORIGIN?.split(',') || true,
 		credentials: true,
+		methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+		allowedHeaders: [
+			'DNT',
+			'User-Agent',
+			'X-Requested-With',
+			'If-Modified-Since',
+			'Cache-Control',
+			'Content-Type',
+			'Range',
+			'Authorization',
+			'Cookie',
+		],
+		exposedHeaders: ['Set-Cookie'],
+		maxAge: 1728000,
 	});
 
 	// Swagger Configuration

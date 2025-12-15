@@ -1,5 +1,6 @@
 import { CryptoService } from '@auth/application/services/crypto.service';
-import { Module, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Module, OnModuleInit } from '@nestjs/common';
+import { OrganizationsModule } from '@organizations/module/organizations.module';
 import { InitializeSystemUserService } from '@users/application/services/initialize-system-user.service';
 import { CreateUserUseCase } from '@users/application/use-cases/create-user.case';
 import { DeleteUserUseCase } from '@users/application/use-cases/delete-user.case';
@@ -17,6 +18,7 @@ const UserRepositoryProvider = {
 };
 
 @Module({
+	imports: [forwardRef(() => OrganizationsModule)],
 	providers: [
 		UserRepositoryProvider,
 		CryptoService,

@@ -1,4 +1,5 @@
 import { Role } from '@auth/infrastructure/decorators/role.decorator';
+import { User } from '@auth/infrastructure/decorators/user.decorator';
 import { ApplicationError } from '@common/errors/application.error';
 import { ZodValidationPipe } from '@common/pipes/zod-validation.pipe';
 import {
@@ -32,6 +33,7 @@ import {
 	ApiResponse,
 	ApiTags,
 } from '@nestjs/swagger';
+import { MembershipRepository } from '@organizations/domain/ports/persistence/membership-repository.port';
 import {
 	type CreateUserDto,
 	createUserSchema,
@@ -45,6 +47,7 @@ import { DeleteUserUseCase } from '@users/application/use-cases/delete-user.case
 import { GetAllUsersUseCase } from '@users/application/use-cases/get-all-users.case';
 import { GetUserByIdUseCase } from '@users/application/use-cases/get-user-by-id.case';
 import { UpdateUserUseCase } from '@users/application/use-cases/update-user.case';
+import { User as UserEntity } from '@users/domain/entities/user.entity';
 import {
 	CreateUserRequestDto,
 	CreateUserResponseDto,
@@ -64,14 +67,15 @@ export class UserRestController {
 		private readonly getUserByIdUseCase: GetUserByIdUseCase,
 		private readonly updateUserUseCase: UpdateUserUseCase,
 		private readonly deleteUserUseCase: DeleteUserUseCase,
+		private readonly membershipRepository: MembershipRepository,
 	) {}
 
 	@Get()
-	@Role('admin')
+	@Role('user')
 	@ApiOperation({
 		summary: 'Obtener todos los usuarios',
 		description:
-			'Retorna una lista de todos los usuarios registrados. Requiere rol de administrador.',
+			'Retorna una lista de usuarios. Los usuarios con rol "user" o "admin" solo pueden ver usuarios de sus organizaciones. El rol "system" puede ver todos los usuarios.',
 	})
 	@ApiResponse({
 		status: 200,
@@ -82,11 +86,26 @@ export class UserRestController {
 		description: 'Error interno del servidor',
 		type: InternalServerErrorDto,
 	})
-	async getAllUsers() {
-		const result = await this.getAllUsersUseCase.execute();
+	async getAllUsers(@User() currentUser: UserEntity) {
+		let result: Awaited<ReturnType<typeof this.getAllUsersUseCase.execute>>;
+
+		// Solo el rol 'system' puede ver todos los usuarios
+		if (currentUser.role === 'system') {
+			result = await this.getAllUsersUseCase.execute();
+		} else {
+			// Para roles 'user' y 'admin', obtener las organizaciones del usuario
+			const memberships = await this.membershipRepository.findByUser(
+				currentUser.id,
+			);
+			const organizationIds = memberships.map((m) => m.organizationId);
+
+			result = await this.getAllUsersUseCase.execute({
+				organizationIds,
+			});
+		}
 
 		if (!result.ok) {
-			throw new InternalServerErrorException(); // Handle error appropriately
+			throw new InternalServerErrorException();
 		}
 
 		return { users: result.value };

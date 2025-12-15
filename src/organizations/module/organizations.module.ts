@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AddMemberUseCase } from '@organizations/application/use-cases/add-member.case';
 import { CreateOrganizationUseCase } from '@organizations/application/use-cases/create-organization.case';
 import { DeleteOrganizationUseCase } from '@organizations/application/use-cases/delete-organization.case';
@@ -32,7 +32,7 @@ const MembershipRepositoryProvider = {
 };
 
 @Module({
-	imports: [UsersModule],
+	imports: [forwardRef(() => UsersModule)],
 	providers: [
 		OrganizationRepositoryProvider,
 		MembershipRepositoryProvider,

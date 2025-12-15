@@ -18,6 +18,8 @@ export abstract class UserRepository {
 
 	abstract findAll(): Promise<User[]>;
 
+	abstract findByOrganizationIds(organizationIds: string[]): Promise<User[]>;
+
 	abstract update(
 		id: string,
 		updateUserDto: UpdateUserDto,

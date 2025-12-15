@@ -98,6 +98,36 @@ export class UserDrizzleAdapter implements UserRepository {
 		return users;
 	}
 
+	async findByOrganizationIds(organizationIds: string[]): Promise<User[]> {
+		if (organizationIds.length === 0) {
+			return [];
+		}
+
+		const { membershipsTable } = await import(
+			'@organizations/infrastructure/entities/membership.drizzle-schema'
+		);
+		const { inArray } = await import('drizzle-orm');
+
+		const users = await this.drizzleConnection.database
+			.selectDistinct({
+				id: usersTable.id,
+				name: usersTable.name,
+				email: usersTable.email,
+				password: usersTable.password,
+				authProvider: usersTable.authProvider,
+				providerId: usersTable.providerId,
+				role: usersTable.role,
+				createdAt: usersTable.createdAt,
+				updatedAt: usersTable.updatedAt,
+			})
+			.from(usersTable)
+			.innerJoin(membershipsTable, eq(usersTable.id, membershipsTable.userId))
+			.where(inArray(membershipsTable.organizationId, organizationIds))
+			.execute();
+
+		return users;
+	}
+
 	async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
 		const [updatedUser] = await this.drizzleConnection.database
 			.update(usersTable)
